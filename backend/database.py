@@ -205,7 +205,6 @@ async def init_database():
         await db.especialidades.insert_many(especialidades)
         
         # Cronograma semanal padrão (semana atual)
-        from datetime import datetime
         semana_atual = datetime.utcnow().strftime("%Y-W%U")
         
         cronograma_padrao = [
