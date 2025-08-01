@@ -151,8 +151,11 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
 def serialize_doc(doc):
     """Convert MongoDB document to dict with string ID"""
     if doc:
-        doc["id"] = str(doc["_id"])
-        del doc["_id"]
+        # If document already has custom 'id' field, keep it; otherwise use _id
+        if "id" not in doc:
+            doc["id"] = str(doc["_id"])
+        if "_id" in doc:
+            del doc["_id"]
     return doc
 
 # Initialize default admin user
