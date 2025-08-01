@@ -1,11 +1,11 @@
 from fastapi import APIRouter, HTTPException, Query, Path
 from typing import List, Optional
 from datetime import datetime, timedelta
-from ..models import (
+from models import (
     Agendamento, AgendamentoCreate, AgendamentoUpdate,
     AgendamentosResponse, StatusAgendamento
 )
-from ..database import db
+from database import db
 
 router = APIRouter(prefix="/agendamentos", tags=["agendamentos"])
 
