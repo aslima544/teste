@@ -1,11 +1,11 @@
 from fastapi import APIRouter, HTTPException, Query, Path
 from typing import List, Optional
 from datetime import datetime
-from ..models import (
+from models import (
     Consultorio, ConsultorioCreate, ConsultorioUpdate,
     ConsultoriosResponse, TipoConsultorio
 )
-from ..database import db
+from database import db
 
 router = APIRouter(prefix="/consultorios", tags=["consultórios"])
 
