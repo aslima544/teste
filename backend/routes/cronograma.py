@@ -1,11 +1,11 @@
 from fastapi import APIRouter, HTTPException, Query, Path
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
-from ..models import (
+from models import (
     CronogramaSemanal, CronogramaSemanalCreate, CronogramaSemanalUpdate,
     CronogramaSemanalResponse, DiaSemana
 )
-from ..database import db
+from database import db
 
 router = APIRouter(prefix="/cronograma", tags=["cronograma"])
 
