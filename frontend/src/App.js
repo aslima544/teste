@@ -162,6 +162,53 @@ const App = () => {
     }
   };
 
+  // Consultorio CRUD operations
+  const handleCreateConsultorio = async (consultorioData) => {
+    try {
+      setLoading(true);
+      await axios.post('/api/consultorios', consultorioData);
+      setShowConsultorioForm(false);
+      fetchDashboardData();
+      alert('Consultório criado com sucesso!');
+    } catch (error) {
+      console.error('Error creating consultorio:', error);
+      alert('Erro ao criar consultório.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateConsultorio = async (consultorioId, consultorioData) => {
+    try {
+      setLoading(true);
+      await axios.put(`/api/consultorios/${consultorioId}`, consultorioData);
+      setEditingConsultorio(null);
+      fetchDashboardData();
+      alert('Consultório atualizado com sucesso!');
+    } catch (error) {
+      console.error('Error updating consultorio:', error);
+      alert('Erro ao atualizar consultório.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteConsultorio = async (consultorioId) => {
+    if (window.confirm('Tem certeza que deseja excluir este consultório?')) {
+      try {
+        setLoading(true);
+        await axios.delete(`/api/consultorios/${consultorioId}`);
+        fetchDashboardData();
+        alert('Consultório excluído com sucesso!');
+      } catch (error) {
+        console.error('Error deleting consultorio:', error);
+        alert('Erro ao excluir consultório.');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
   // Doctor CRUD operations
   const handleCreateDoctor = async (doctorData) => {
     try {
