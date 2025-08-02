@@ -170,6 +170,57 @@ const App = () => {
     }
   };
 
+  // User CRUD operations
+  const handleCreateUser = async (userData) => {
+    try {
+      setLoading(true);
+      await axios.post('/api/users', userData);
+      setShowUserForm(false);
+      fetchDashboardData();
+      alert('Usuário criado com sucesso!');
+    } catch (error) {
+      console.error('Error creating user:', error);
+      if (error.response?.status === 400) {
+        alert('Erro: Nome de usuário já existe.');
+      } else {
+        alert('Erro ao criar usuário.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateUser = async (userId, userData) => {
+    try {
+      setLoading(true);
+      await axios.put(`/api/users/${userId}`, userData);
+      setEditingUser(null);
+      fetchDashboardData();
+      alert('Usuário atualizado com sucesso!');
+    } catch (error) {
+      console.error('Error updating user:', error);
+      alert('Erro ao atualizar usuário.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (window.confirm('Tem certeza que deseja excluir este usuário?')) {
+      try {
+        setLoading(true);
+        await axios.delete(`/api/users/${userId}`);
+        fetchDashboardData();
+        alert('Usuário excluído com sucesso!');
+      } catch (error) {
+        console.error('Error deleting user:', error);
+        alert('Erro ao excluir usuário.');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
   // Consultorio CRUD operations
   const handleCreateConsultorio = async (consultorioData) => {
     try {
