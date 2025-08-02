@@ -777,12 +777,12 @@ const App = () => {
         <div className="card">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <Calendar className="h-8 w-8 text-blue-600" />
+              <Calendar className="h-8 w-8 text-orange-600" />
             </div>
             <div className="ml-4">
-              <div className="text-sm font-medium text-gray-500">Consultas Hoje</div>
+              <div className="text-sm font-medium text-gray-500">Total Consultórios</div>
               <div className="text-2xl font-bold text-gray-900">
-                {dashboardStats.today_appointments || 0}
+                {dashboardStats.total_consultorios || 0}
               </div>
             </div>
           </div>
@@ -794,14 +794,41 @@ const App = () => {
               <Activity className="h-8 w-8 text-purple-600" />
             </div>
             <div className="ml-4">
-              <div className="text-sm font-medium text-gray-500">Total Consultas</div>
+              <div className="text-sm font-medium text-gray-500">Consultas Hoje</div>
               <div className="text-2xl font-bold text-gray-900">
-                {dashboardStats.total_appointments || 0}
+                {dashboardStats.today_appointments || 0}
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Consultorio Occupancy */}
+      {dashboardStats.consultorio_stats && dashboardStats.consultorio_stats.length > 0 && (
+        <div className="card">
+          <h2 className="text-lg font-medium text-gray-900 mb-4">Ocupação dos Consultórios Hoje</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {dashboardStats.consultorio_stats.map((consultorio) => (
+              <div key={consultorio.id} className="border border-gray-200 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-gray-900">{consultorio.name}</span>
+                  <span className="text-sm font-medium text-primary-600">
+                    {consultorio.occupied_slots} consultas
+                  </span>
+                </div>
+                <div className="mt-2">
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-primary-600 h-2 rounded-full" 
+                      style={{width: `${Math.min(100, (consultorio.occupied_slots / 8) * 100)}%`}}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Recent Appointments */}
       <div className="card">
