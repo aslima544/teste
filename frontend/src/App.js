@@ -514,6 +514,103 @@ const App = () => {
     );
   };
 
+  // Consultorio Form Component
+  const ConsultorioForm = ({ consultorio, onSubmit, onCancel }) => {
+    const [formData, setFormData] = useState({
+      name: consultorio?.name || '',
+      description: consultorio?.description || '',
+      capacity: consultorio?.capacity || 1,
+      equipment: consultorio?.equipment?.join(', ') || '',
+      location: consultorio?.location || ''
+    });
+
+    const handleSubmit = (e) => {
+      e.preventDefault();
+      const submitData = {
+        ...formData,
+        equipment: formData.equipment.split(',').map(item => item.trim()).filter(item => item)
+      };
+      onSubmit(submitData);
+    };
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-lg max-w-md w-full">
+          <div className="p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              {consultorio ? 'Editar Consultório' : 'Novo Consultório'}
+            </h3>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Nome</label>
+                <input
+                  type="text"
+                  required
+                  className="input-field mt-1"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Ex: Consultório 1, Sala A"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Descrição</label>
+                <textarea
+                  className="input-field mt-1"
+                  rows="2"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Descrição do consultório"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Capacidade</label>
+                <select
+                  className="input-field mt-1"
+                  value={formData.capacity}
+                  onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value) })}
+                >
+                  <option value={1}>1 pessoa</option>
+                  <option value={2}>2 pessoas</option>
+                  <option value={3}>3 pessoas</option>
+                  <option value={4}>4 pessoas</option>
+                  <option value={5}>5+ pessoas</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Equipamentos</label>
+                <input
+                  type="text"
+                  className="input-field mt-1"
+                  value={formData.equipment}
+                  onChange={(e) => setFormData({ ...formData, equipment: e.target.value })}
+                  placeholder="Ex: Estetoscópio, Otoscópio, Balança (separados por vírgula)"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Localização</label>
+                <input
+                  type="text"
+                  className="input-field mt-1"
+                  value={formData.location}
+                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                  placeholder="Ex: 1º andar, Ala Norte"
+                />
+              </div>
+              <div className="flex space-x-3 pt-4">
+                <button type="submit" className="btn-primary flex-1">
+                  {consultorio ? 'Atualizar' : 'Criar'}
+                </button>
+                <button type="button" onClick={onCancel} className="btn-secondary flex-1">
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // Appointment Form Component
   const AppointmentForm = ({ appointment, onSubmit, onCancel }) => {
     const [formData, setFormData] = useState({
