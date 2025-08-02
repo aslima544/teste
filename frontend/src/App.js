@@ -873,6 +873,9 @@ const App = () => {
                     {appointment.doctor_name}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {appointment.consultorio_name || 'N/A'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {new Date(appointment.appointment_date).toLocaleString('pt-BR')}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
