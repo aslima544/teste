@@ -252,7 +252,7 @@ class ConsultorioAPITester:
             self.log_test("Get Appointment by ID", False, details)
             return False
 
-    def test_update_appointment(self, appointment_id: str, patient_id: str, doctor_id: str):
+    def test_update_appointment(self, appointment_id: str, patient_id: str, doctor_id: str, consultorio_id: str = None):
         """Test update appointment endpoint"""
         # Update appointment for day after tomorrow at 2:00 PM
         day_after_tomorrow = datetime.now() + timedelta(days=2)
@@ -266,6 +266,10 @@ class ConsultorioAPITester:
             "notes": "Consulta de retorno - atualizada",
             "status": "scheduled"
         }
+        
+        # Add consultorio_id if provided
+        if consultorio_id:
+            update_data["consultorio_id"] = consultorio_id
         
         success, data, details = self.make_request('PUT', f'/api/appointments/{appointment_id}', update_data)
         
