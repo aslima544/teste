@@ -1038,6 +1038,88 @@ const App = () => {
     </div>
   );
 
+  // Consultorios Component
+  const ConsultoriosTab = () => (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-900">Consultórios</h1>
+        <button
+          onClick={() => setShowConsultorioForm(true)}
+          className="btn-primary"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Novo Consultório
+        </button>
+      </div>
+
+      <div className="card">
+        <div className="overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Nome
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Localização
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Capacidade
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Equipamentos
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Ações
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {consultorios.map((consultorio) => (
+                <tr key={consultorio.id}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {consultorio.name}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {consultorio.location || '-'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {consultorio.capacity} pessoa{consultorio.capacity > 1 ? 's' : ''}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-500">
+                    <div className="max-w-xs">
+                      {consultorio.equipment && consultorio.equipment.length > 0 
+                        ? consultorio.equipment.slice(0, 2).join(', ') + 
+                          (consultorio.equipment.length > 2 ? '...' : '')
+                        : '-'
+                      }
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => setEditingConsultorio(consultorio)}
+                        className="text-primary-600 hover:text-primary-900"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteConsultorio(consultorio.id)}
+                        className="text-red-600 hover:text-red-900"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+
   // Main App Layout
   if (!currentUser) {
     return <LoginForm />;
