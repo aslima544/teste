@@ -366,7 +366,7 @@ class ConsultorioAPITester:
 def main():
     """Main test execution"""
     print("Sistema de Gestão de Consultórios - Backend API Testing")
-    print(f"Testing against: http://localhost:8001")
+    print(f"Testing against: https://8af00e10-3989-4667-8690-ce236d12eb37.preview.emergentagent.com")
     print(f"Test started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
     tester = ConsultorioAPITester()
