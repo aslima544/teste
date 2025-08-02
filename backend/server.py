@@ -93,6 +93,9 @@ class ConsultorioBase(BaseModel):
     capacity: int = 1
     equipment: Optional[List[str]] = []
     location: Optional[str] = None
+    occupancy_type: str = "fixed"  # fixed, rotative
+    fixed_schedule: Optional[dict] = None  # {"team": "ESF 1", "start": "07:00", "end": "16:00"}
+    weekly_schedule: Optional[dict] = None  # {"monday": {"morning": "Cardiologia", "afternoon": "Cardiologia"}, ...}
     is_active: bool = True
 
 class ConsultorioCreate(ConsultorioBase):
