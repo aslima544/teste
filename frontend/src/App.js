@@ -1838,6 +1838,21 @@ const App = () => {
         />
       )}
 
+      {showUserForm && (
+        <UserForm
+          onSubmit={handleCreateUser}
+          onCancel={() => setShowUserForm(false)}
+        />
+      )}
+
+      {editingUser && (
+        <UserForm
+          user={editingUser}
+          onSubmit={(data) => handleUpdateUser(editingUser.id, data)}
+          onCancel={() => setEditingUser(null)}
+        />
+      )}
+
       {showDoctorForm && (
         <DoctorForm
           onSubmit={handleCreateDoctor}
