@@ -177,7 +177,7 @@ def serialize_doc(doc):
             del doc["_id"]
     return doc
 
-# Initialize default admin user
+# Initialize predefined consultorios
 @app.on_event("startup")
 async def startup_event():
     # Create default admin user if doesn't exist
@@ -195,6 +195,163 @@ async def startup_event():
         }
         db.users.insert_one(admin_data)
         print("Default admin user created: admin/admin123")
+    
+    # Create predefined consultorios if they don't exist
+    existing_consultorios = db.consultorios.count_documents({})
+    if existing_consultorios == 0:
+        predefined_consultorios = [
+            {
+                "id": str(uuid.uuid4()),
+                "name": "C1",
+                "description": "Consultório 1 - Estratégia Saúde da Família 1",
+                "capacity": 2,
+                "equipment": ["Estetoscópio", "Tensiômetro", "Balança", "Mesa ginecológica"],
+                "location": "Térreo - Ala Oeste",
+                "occupancy_type": "fixed",
+                "fixed_schedule": {
+                    "team": "ESF 1",
+                    "start": "07:00",
+                    "end": "16:00"
+                },
+                "weekly_schedule": None,
+                "is_active": True,
+                "created_at": datetime.utcnow()
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "name": "C2",
+                "description": "Consultório 2 - Estratégia Saúde da Família 2",
+                "capacity": 2,
+                "equipment": ["Estetoscópio", "Tensiômetro", "Balança", "Mesa ginecológica"],
+                "location": "Térreo - Ala Oeste",
+                "occupancy_type": "fixed",
+                "fixed_schedule": {
+                    "team": "ESF 2",
+                    "start": "07:00",
+                    "end": "16:00"
+                },
+                "weekly_schedule": None,
+                "is_active": True,
+                "created_at": datetime.utcnow()
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "name": "C3",
+                "description": "Consultório 3 - Estratégia Saúde da Família 3",
+                "capacity": 2,
+                "equipment": ["Estetoscópio", "Tensiômetro", "Balança", "Mesa ginecológica"],
+                "location": "Térreo - Ala Leste",
+                "occupancy_type": "fixed",
+                "fixed_schedule": {
+                    "team": "ESF 3",
+                    "start": "08:00",
+                    "end": "17:00"
+                },
+                "weekly_schedule": None,
+                "is_active": True,
+                "created_at": datetime.utcnow()
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "name": "C4",
+                "description": "Consultório 4 - Estratégia Saúde da Família 4",
+                "capacity": 2,
+                "equipment": ["Estetoscópio", "Tensiômetro", "Balança", "Mesa ginecológica"],
+                "location": "Térreo - Ala Leste",
+                "occupancy_type": "fixed",
+                "fixed_schedule": {
+                    "team": "ESF 4",
+                    "start": "10:00",
+                    "end": "19:00"
+                },
+                "weekly_schedule": None,
+                "is_active": True,
+                "created_at": datetime.utcnow()
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "name": "C5",
+                "description": "Consultório 5 - Estratégia Saúde da Família 5",
+                "capacity": 2,
+                "equipment": ["Estetoscópio", "Tensiômetro", "Balança", "Mesa ginecológica"],
+                "location": "1º Andar - Ala Central",
+                "occupancy_type": "fixed",
+                "fixed_schedule": {
+                    "team": "ESF 5",
+                    "start": "12:00",
+                    "end": "21:00"
+                },
+                "weekly_schedule": None,
+                "is_active": True,
+                "created_at": datetime.utcnow()
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "name": "C6",
+                "description": "Consultório 6 - Uso Rotativo (Especialistas)",
+                "capacity": 2,
+                "equipment": ["Estetoscópio", "Tensiômetro", "Eletrocardiógrafo", "Maca"],
+                "location": "1º Andar - Ala Norte",
+                "occupancy_type": "rotative",
+                "fixed_schedule": None,
+                "weekly_schedule": {
+                    "monday": {"morning": "Cardiologia", "afternoon": "Cardiologia"},
+                    "tuesday": {"morning": "Acupuntura", "afternoon": "Acupuntura"},
+                    "wednesday": {"morning": "Cardiologia", "afternoon": "Cardiologia"},
+                    "thursday": {"morning": "Cardiologia", "afternoon": "Ginecologista"},
+                    "friday": {"morning": "Acupuntura", "afternoon": "Acupuntura"},
+                    "saturday": {"morning": "Livre", "afternoon": "Livre"},
+                    "sunday": {"morning": "Livre", "afternoon": "Livre"}
+                },
+                "is_active": True,
+                "created_at": datetime.utcnow()
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "name": "C7",
+                "description": "Consultório 7 - Uso Rotativo (Médico Apoio/Especialistas)",
+                "capacity": 2,
+                "equipment": ["Estetoscópio", "Tensiômetro", "Otoscópio", "Oftalmoscópio"],
+                "location": "1º Andar - Ala Norte",
+                "occupancy_type": "rotative",
+                "fixed_schedule": None,
+                "weekly_schedule": {
+                    "monday": {"morning": "Médico Apoio", "afternoon": "Médico Apoio"},
+                    "tuesday": {"morning": "Livre", "afternoon": "Cardiologia"},
+                    "wednesday": {"morning": "Pediatria", "afternoon": "Acupuntura"},
+                    "thursday": {"morning": "Pediatria", "afternoon": "Acupuntura"},
+                    "friday": {"morning": "Médico Apoio", "afternoon": "Médico Apoio"},
+                    "saturday": {"morning": "Livre", "afternoon": "Livre"},
+                    "sunday": {"morning": "Livre", "afternoon": "Livre"}
+                },
+                "is_active": True,
+                "created_at": datetime.utcnow()
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "name": "C8",
+                "description": "Consultório 8 - Coringa (E-Multi/Apoio/Reserva)",
+                "capacity": 3,
+                "equipment": ["Estetoscópio", "Tensiômetro", "Balança", "Mesa auxiliar"],
+                "location": "1º Andar - Ala Sul",
+                "occupancy_type": "rotative",
+                "fixed_schedule": None,
+                "weekly_schedule": {
+                    "monday": {"morning": "E-MULTI", "afternoon": "E-MULTI"},
+                    "tuesday": {"morning": "Médico Apoio", "afternoon": "Médico Apoio"},
+                    "wednesday": {"morning": "E-MULTI", "afternoon": "E-MULTI"},
+                    "thursday": {"morning": "Médico Apoio", "afternoon": "Médico Apoio"},
+                    "friday": {"morning": "Apoio/Reserva", "afternoon": "Apoio/Reserva"},
+                    "saturday": {"morning": "Livre", "afternoon": "Livre"},
+                    "sunday": {"morning": "Livre", "afternoon": "Livre"}
+                },
+                "is_active": True,
+                "created_at": datetime.utcnow()
+            }
+        ]
+        
+        db.consultorios.insert_many(predefined_consultorios)
+        print("Predefined consultorios created successfully!")
 
 # Auth Routes
 @app.post("/api/auth/login", response_model=Token)
