@@ -718,13 +718,12 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
     # Recent appointments with patient, doctor and consultorio names
     recent_appointments = list(db.appointments.find({}).sort("created_at", -1).limit(5))
     for appointment in recent_appointments:
-        patient = db.patients.find_one({"id": appointment["patient_id"]})
-        doctor = db.doctors.find_one({"id": appointment["doctor_id"]})
+        patient = db.patients.find_one({"id": appointment.get("patient_id", "")})
+        doctor = db.doctors.find_one({"id": appointment.get("doctor_id", "")})
         consultorio = db.consultorios.find_one({"id": appointment.get("consultorio_id", "")})
         appointment["patient_name"] = patient["name"] if patient else "Unknown"
-        appointment["doctor_name"] = doctor["name"] if doctor else "Unknown"
+        appointment["doctor_name"] = doctor["name"] if doctor else "Unknown"  
         appointment["consultorio_name"] = consultorio["name"] if consultorio else "N/A"
-        appointment = serialize_doc(appointment)
     
     # Consultorio occupancy today
     consultorio_stats = []
