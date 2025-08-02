@@ -31,6 +31,7 @@ const App = () => {
   const [patients, setPatients] = useState([]);
   const [doctors, setDoctors] = useState([]);
   const [consultorios, setConsultorios] = useState([]);
+  const [users, setUsers] = useState([]);
   const [appointments, setAppointments] = useState([]);
   const [dashboardStats, setDashboardStats] = useState({});
   const [weeklySchedule, setWeeklySchedule] = useState({});
@@ -39,10 +40,12 @@ const App = () => {
   const [showPatientForm, setShowPatientForm] = useState(false);
   const [showDoctorForm, setShowDoctorForm] = useState(false);
   const [showConsultorioForm, setShowConsultorioForm] = useState(false);
+  const [showUserForm, setShowUserForm] = useState(false);
   const [showAppointmentForm, setShowAppointmentForm] = useState(false);
   const [editingPatient, setEditingPatient] = useState(null);
   const [editingDoctor, setEditingDoctor] = useState(null);
   const [editingConsultorio, setEditingConsultorio] = useState(null);
+  const [editingUser, setEditingUser] = useState(null);
 
   // Set auth token
   useEffect(() => {
