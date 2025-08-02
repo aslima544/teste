@@ -1224,6 +1224,13 @@ const App = () => {
         />
       )}
 
+      {showDoctorForm && (
+        <DoctorForm
+          onSubmit={handleCreateDoctor}
+          onCancel={() => setShowDoctorForm(false)}
+        />
+      )}
+
       {showConsultorioForm && (
         <ConsultorioForm
           onSubmit={handleCreateConsultorio}
