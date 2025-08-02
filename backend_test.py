@@ -442,8 +442,25 @@ class ConsultorioAPITester:
             self.test_get_doctors()
             self.test_get_doctor_by_id(doctor_id)
         
-        # Test appointment operations (requires both patient and doctor)
-        if patient_id and doctor_id:
+        # Test consultorio operations
+        consultorio_success, consultorios_data = self.test_get_consultorios()
+        self.test_weekly_schedule()
+        self.test_consultorio_availability()
+        
+        # Test appointment operations with consultorio (requires patient, doctor, and consultorio)
+        if patient_id and doctor_id and consultorio_success and consultorios_data:
+            # Use the first available consultorio
+            first_consultorio_id = consultorios_data[0]['id'] if consultorios_data else None
+            if first_consultorio_id:
+                appointment_id = self.test_create_appointment_with_consultorio(patient_id, doctor_id, first_consultorio_id)
+                if appointment_id:
+                    self.test_get_appointments()
+                    self.test_get_appointment_by_id(appointment_id)
+                    self.test_update_appointment(appointment_id, patient_id, doctor_id)
+                    # Test conflict detection
+                    self.test_appointment_conflict(patient_id, doctor_id, first_consultorio_id)
+        elif patient_id and doctor_id:
+            # Fallback to original appointment test without consultorio
             appointment_id = self.test_create_appointment(patient_id, doctor_id)
             if appointment_id:
                 self.test_get_appointments()
