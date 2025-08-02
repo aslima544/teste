@@ -1819,6 +1819,7 @@ const App = () => {
         {activeTab === 'patients' && <PatientsTab />}
         {activeTab === 'doctors' && <DoctorsTab />}
         {activeTab === 'consultorios' && <ConsultoriosTab />}
+        {activeTab === 'users' && <UsersTab />}
       </main>
 
       {/* Modals */}
