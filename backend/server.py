@@ -453,6 +453,7 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
     # Count statistics
     total_patients = db.patients.count_documents({})
     total_doctors = db.doctors.count_documents({"is_active": True})
+    total_consultorios = db.consultorios.count_documents({"is_active": True})
     total_appointments = db.appointments.count_documents({})
     
     # Today's appointments
@@ -463,21 +464,43 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
         }
     })
     
-    # Recent appointments with patient and doctor names
+    # Recent appointments with patient, doctor and consultorio names
     recent_appointments = list(db.appointments.find({}).sort("created_at", -1).limit(5))
     for appointment in recent_appointments:
         patient = db.patients.find_one({"id": appointment["patient_id"]})
         doctor = db.doctors.find_one({"id": appointment["doctor_id"]})
+        consultorio = db.consultorios.find_one({"id": appointment.get("consultorio_id", "")})
         appointment["patient_name"] = patient["name"] if patient else "Unknown"
         appointment["doctor_name"] = doctor["name"] if doctor else "Unknown"
+        appointment["consultorio_name"] = consultorio["name"] if consultorio else "N/A"
         appointment = serialize_doc(appointment)
+    
+    # Consultorio occupancy today
+    consultorio_stats = []
+    consultorios = list(db.consultorios.find({"is_active": True}))
+    for consultorio in consultorios:
+        occupied_slots = db.appointments.count_documents({
+            "consultorio_id": consultorio["id"],
+            "appointment_date": {
+                "$gte": today,
+                "$lt": tomorrow
+            },
+            "status": {"$ne": "canceled"}
+        })
+        consultorio_stats.append({
+            "name": consultorio["name"],
+            "occupied_slots": occupied_slots,
+            "id": consultorio["id"]
+        })
     
     return {
         "total_patients": total_patients,
         "total_doctors": total_doctors,
+        "total_consultorios": total_consultorios,
         "total_appointments": total_appointments,
         "today_appointments": today_appointments,
-        "recent_appointments": [serialize_doc(app) for app in recent_appointments]
+        "recent_appointments": [serialize_doc(app) for app in recent_appointments],
+        "consultorio_stats": consultorio_stats
     }
 
 @app.get("/api/health")
