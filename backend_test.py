@@ -290,7 +290,112 @@ class ConsultorioAPITester:
             self.log_test("Dashboard Stats", False, details)
             return False
 
-    def test_delete_patient(self, patient_id: str):
+    def test_get_consultorios(self):
+        """Test get all consultorios endpoint"""
+        success, data, details = self.make_request('GET', '/api/consultorios')
+        
+        if success and isinstance(data, list):
+            # Should have 8 predefined consultorios (C1-C8)
+            expected_count = 8
+            actual_count = len(data)
+            if actual_count >= expected_count:
+                self.log_test("Get Consultorios", True, f"{details} - Found {actual_count} consultorios (expected >= {expected_count})")
+                return True, data
+            else:
+                self.log_test("Get Consultorios", False, f"{details} - Found {actual_count} consultorios, expected >= {expected_count}")
+                return False, data
+        else:
+            self.log_test("Get Consultorios", False, details)
+            return False, []
+
+    def test_weekly_schedule(self):
+        """Test weekly schedule endpoint"""
+        success, data, details = self.make_request('GET', '/api/consultorios/weekly-schedule')
+        
+        expected_keys = ['fixed_consultorios', 'rotative_consultorios', 'schedule_grid']
+        
+        if success and all(key in data for key in expected_keys):
+            fixed_count = len(data.get('fixed_consultorios', []))
+            rotative_count = len(data.get('rotative_consultorios', []))
+            schedule_grid_count = len(data.get('schedule_grid', {}))
+            
+            # Should have 5 fixed (C1-C5) and 3 rotative (C6-C8)
+            if fixed_count >= 5 and rotative_count >= 3:
+                self.log_test("Weekly Schedule", True, f"{details} - Fixed: {fixed_count}, Rotative: {rotative_count}, Grid: {schedule_grid_count}")
+                return True, data
+            else:
+                self.log_test("Weekly Schedule", False, f"{details} - Fixed: {fixed_count} (expected >=5), Rotative: {rotative_count} (expected >=3)")
+                return False, data
+        else:
+            self.log_test("Weekly Schedule", False, details)
+            return False, {}
+
+    def test_consultorio_availability(self):
+        """Test consultorio availability for specific day"""
+        success, data, details = self.make_request('GET', '/api/consultorios/availability/monday')
+        
+        if success and isinstance(data, list):
+            # Should return availability for all consultorios
+            if len(data) >= 8:
+                self.log_test("Consultorio Availability (Monday)", True, f"{details} - Found availability for {len(data)} consultorios")
+                return True
+            else:
+                self.log_test("Consultorio Availability (Monday)", False, f"{details} - Found availability for {len(data)} consultorios, expected >= 8")
+                return False
+        else:
+            self.log_test("Consultorio Availability (Monday)", False, details)
+            return False
+
+    def test_create_appointment_with_consultorio(self, patient_id: str, doctor_id: str, consultorio_id: str):
+        """Test create appointment with specific consultorio"""
+        # Schedule appointment for tomorrow at 10:00 AM
+        tomorrow = datetime.now() + timedelta(days=1)
+        appointment_date = tomorrow.replace(hour=10, minute=0, second=0, microsecond=0)
+        
+        appointment_data = {
+            "patient_id": patient_id,
+            "doctor_id": doctor_id,
+            "consultorio_id": consultorio_id,
+            "appointment_date": appointment_date.isoformat() + "Z",
+            "duration_minutes": 30,
+            "notes": "Consulta com consultório específico",
+            "status": "scheduled"
+        }
+        
+        success, data, details = self.make_request('POST', '/api/appointments', appointment_data, 200)
+        
+        if success and 'id' in data and data.get('consultorio_id') == consultorio_id:
+            self.created_resources['appointments'].append(data['id'])
+            self.log_test("Create Appointment with Consultorio", True, f"{details} - Appointment ID: {data['id']}, Consultorio: {consultorio_id}")
+            return data['id']
+        else:
+            self.log_test("Create Appointment with Consultorio", False, details)
+            return None
+
+    def test_appointment_conflict(self, patient_id: str, doctor_id: str, consultorio_id: str):
+        """Test appointment conflict detection"""
+        # Try to schedule at the same time as previous appointment
+        tomorrow = datetime.now() + timedelta(days=1)
+        appointment_date = tomorrow.replace(hour=10, minute=0, second=0, microsecond=0)
+        
+        appointment_data = {
+            "patient_id": patient_id,
+            "doctor_id": doctor_id,
+            "consultorio_id": consultorio_id,
+            "appointment_date": appointment_date.isoformat() + "Z",
+            "duration_minutes": 30,
+            "notes": "Consulta conflitante",
+            "status": "scheduled"
+        }
+        
+        success, data, details = self.make_request('POST', '/api/appointments', appointment_data, 409)  # Expect conflict
+        
+        if success:  # Success means we got the expected 409 status
+            self.log_test("Appointment Conflict Detection", True, f"{details} - Conflict properly detected")
+            return True
+        else:
+            self.log_test("Appointment Conflict Detection", False, f"{details} - Conflict not detected properly")
+            return False
         """Test delete patient endpoint"""
         success, data, details = self.make_request('DELETE', f'/api/patients/{patient_id}', expected_status=200)
         
