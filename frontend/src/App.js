@@ -1163,15 +1163,15 @@ const App = () => {
                   Pacientes
                 </button>
                 <button
-                  onClick={() => setActiveTab('doctors')}
+                  onClick={() => setActiveTab('consultorios')}
                   className={`px-3 py-2 text-sm font-medium rounded-md ${
-                    activeTab === 'doctors'
+                    activeTab === 'consultorios'
                       ? 'bg-primary-100 text-primary-700'
                       : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
-                  <Stethoscope className="h-4 w-4 inline mr-2" />
-                  Médicos
+                  <ClipboardList className="h-4 w-4 inline mr-2" />
+                  Consultórios
                 </button>
               </div>
               
