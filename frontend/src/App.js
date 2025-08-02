@@ -573,6 +573,111 @@ const App = () => {
     );
   };
 
+  // User Form Component
+  const UserForm = ({ user, onSubmit, onCancel }) => {
+    const [formData, setFormData] = useState({
+      username: user?.username || '',
+      email: user?.email || '',
+      full_name: user?.full_name || '',
+      role: user?.role || 'reception',
+      password: ''
+    });
+
+    const handleSubmit = (e) => {
+      e.preventDefault();
+      if (!user && !formData.password) {
+        alert('Senha é obrigatória para novos usuários');
+        return;
+      }
+      onSubmit(formData);
+    };
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-lg max-w-md w-full">
+          <div className="p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              {user ? 'Editar Usuário' : 'Novo Usuário'}
+            </h3>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Nome de Usuário</label>
+                <input
+                  type="text"
+                  required
+                  disabled={!!user} // Disable editing username for existing users
+                  className={`input-field mt-1 ${user ? 'bg-gray-100' : ''}`}
+                  value={formData.username}
+                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                  placeholder="Ex: joao.silva"
+                />
+                {user && (
+                  <p className="text-xs text-gray-500 mt-1">Nome de usuário não pode ser alterado</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Nome Completo</label>
+                <input
+                  type="text"
+                  required
+                  className="input-field mt-1"
+                  value={formData.full_name}
+                  onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                  placeholder="Ex: João Silva Santos"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Email</label>
+                <input
+                  type="email"
+                  required
+                  className="input-field mt-1"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="Ex: joao.silva@email.com"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Função</label>
+                <select
+                  required
+                  className="input-field mt-1"
+                  value={formData.role}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                >
+                  <option value="reception">Recepção</option>
+                  <option value="doctor">Médico</option>
+                  <option value="admin">Administrador</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  {user ? 'Nova Senha (deixe em branco para não alterar)' : 'Senha'}
+                </label>
+                <input
+                  type="password"
+                  required={!user}
+                  className="input-field mt-1"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  placeholder={user ? 'Digite nova senha para alterar' : 'Digite a senha'}
+                />
+              </div>
+              <div className="flex space-x-3 pt-4">
+                <button type="submit" className="btn-primary flex-1">
+                  {user ? 'Atualizar' : 'Criar'}
+                </button>
+                <button type="button" onClick={onCancel} className="btn-secondary flex-1">
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // Consultorio Form Component
   const ConsultorioForm = ({ consultorio, onSubmit, onCancel }) => {
     const [formData, setFormData] = useState({
