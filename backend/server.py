@@ -375,6 +375,37 @@ async def create_appointment(appointment: AppointmentCreate, current_user: dict 
     if not doctor:
         raise HTTPException(status_code=404, detail="Doctor not found")
     
+    # Check if consultorio exists
+    consultorio = db.consultorios.find_one({"id": appointment.consultorio_id, "is_active": True})
+    if not consultorio:
+        raise HTTPException(status_code=404, detail="Consultório not found")
+    
+    # Check for conflicts (same consultorio at same time)
+    start_time = appointment.appointment_date
+    end_time = start_time + timedelta(minutes=appointment.duration_minutes)
+    
+    existing_appointment = db.appointments.find_one({
+        "consultorio_id": appointment.consultorio_id,
+        "status": {"$ne": "canceled"},
+        "$or": [
+            {
+                "$and": [
+                    {"appointment_date": {"$lte": start_time}},
+                    {"appointment_date": {"$gte": start_time}}
+                ]
+            },
+            {
+                "$and": [
+                    {"appointment_date": {"$lt": end_time}},
+                    {"appointment_date": {"$gt": start_time}}
+                ]
+            }
+        ]
+    })
+    
+    if existing_appointment:
+        raise HTTPException(status_code=409, detail="Consultório já ocupado neste horário")
+    
     appointment_data = {
         "id": str(uuid.uuid4()),
         **appointment.dict(),
