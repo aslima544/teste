@@ -471,7 +471,7 @@ class ConsultorioAPITester:
                 if appointment_id:
                     self.test_get_appointments()
                     self.test_get_appointment_by_id(appointment_id)
-                    self.test_update_appointment(appointment_id, patient_id, doctor_id)
+                    self.test_update_appointment(appointment_id, patient_id, doctor_id, first_consultorio_id)
                     # Test conflict detection
                     self.test_appointment_conflict(patient_id, doctor_id, first_consultorio_id)
         elif patient_id and doctor_id:
