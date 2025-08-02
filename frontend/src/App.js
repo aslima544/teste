@@ -1224,10 +1224,18 @@ const App = () => {
         />
       )}
 
-      {showDoctorForm && (
-        <DoctorForm
-          onSubmit={handleCreateDoctor}
-          onCancel={() => setShowDoctorForm(false)}
+      {showConsultorioForm && (
+        <ConsultorioForm
+          onSubmit={handleCreateConsultorio}
+          onCancel={() => setShowConsultorioForm(false)}
+        />
+      )}
+
+      {editingConsultorio && (
+        <ConsultorioForm
+          consultorio={editingConsultorio}
+          onSubmit={(data) => handleUpdateConsultorio(editingConsultorio.id, data)}
+          onCancel={() => setEditingConsultorio(null)}
         />
       )}
 
