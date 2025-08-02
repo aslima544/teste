@@ -616,6 +616,7 @@ const App = () => {
     const [formData, setFormData] = useState({
       patient_id: appointment?.patient_id || '',
       doctor_id: appointment?.doctor_id || '',
+      consultorio_id: appointment?.consultorio_id || '',
       appointment_date: appointment?.appointment_date?.slice(0, 16) || '',
       duration_minutes: appointment?.duration_minutes || 30,
       notes: appointment?.notes || ''
@@ -666,6 +667,22 @@ const App = () => {
                   {doctors.map(doctor => (
                     <option key={doctor.id} value={doctor.id}>
                       {doctor.name} - {doctor.specialty}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Consultório</label>
+                <select
+                  required
+                  className="input-field mt-1"
+                  value={formData.consultorio_id}
+                  onChange={(e) => setFormData({ ...formData, consultorio_id: e.target.value })}
+                >
+                  <option value="">Selecione um consultório</option>
+                  {consultorios.map(consultorio => (
+                    <option key={consultorio.id} value={consultorio.id}>
+                      {consultorio.name} - {consultorio.location || 'Sem localização'}
                     </option>
                   ))}
                 </select>
