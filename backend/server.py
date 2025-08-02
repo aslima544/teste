@@ -403,6 +403,74 @@ async def get_users(current_user: dict = Depends(get_current_user)):
     users = list(db.users.find({}))
     return [serialize_doc(user) for user in users]
 
+@app.get("/api/users", response_model=List[User])
+async def get_users(current_user: dict = Depends(get_current_user)):
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Only admins can list users")
+    
+    users = list(db.users.find({}))
+    return [serialize_doc(user) for user in users]
+
+@app.get("/api/users/{user_id}", response_model=User)
+async def get_user(user_id: str, current_user: dict = Depends(get_current_user)):
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Only admins can view users")
+    
+    user = db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return serialize_doc(user)
+
+@app.put("/api/users/{user_id}", response_model=User)
+async def update_user(user_id: str, user_update: UserCreate, current_user: dict = Depends(get_current_user)):
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Only admins can update users")
+    
+    # Check if user exists
+    existing_user = db.users.find_one({"id": user_id})
+    if not existing_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    update_data = {
+        "email": user_update.email,
+        "full_name": user_update.full_name,
+        "role": user_update.role,
+        "updated_at": datetime.utcnow()
+    }
+    
+    # Only update password if provided
+    if user_update.password:
+        update_data["password_hash"] = get_password_hash(user_update.password)
+    
+    result = db.users.update_one({"id": user_id}, {"$set": update_data})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    updated_user = db.users.find_one({"id": user_id})
+    return serialize_doc(updated_user)
+
+@app.delete("/api/users/{user_id}")
+async def delete_user(user_id: str, current_user: dict = Depends(get_current_user)):
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Only admins can delete users")
+    
+    # Prevent deletion of admin users
+    user_to_delete = db.users.find_one({"id": user_id})
+    if not user_to_delete:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if user_to_delete["role"] == "admin":
+        raise HTTPException(status_code=400, detail="Cannot delete admin users")
+    
+    # Prevent self-deletion
+    if user_id == current_user["id"]:
+        raise HTTPException(status_code=400, detail="Cannot delete your own account")
+    
+    result = db.users.delete_one({"id": user_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"message": "User deleted successfully"}
+
 # Patient Routes
 @app.post("/api/patients", response_model=Patient)
 async def create_patient(patient: PatientCreate, current_user: dict = Depends(get_current_user)):
