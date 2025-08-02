@@ -87,9 +87,25 @@ class Doctor(DoctorBase):
     created_at: datetime
     is_active: bool = True
 
+class ConsultorioBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+    capacity: int = 1
+    equipment: Optional[List[str]] = []
+    location: Optional[str] = None
+    is_active: bool = True
+
+class ConsultorioCreate(ConsultorioBase):
+    pass
+
+class Consultorio(ConsultorioBase):
+    id: str
+    created_at: datetime
+
 class AppointmentBase(BaseModel):
     patient_id: str
     doctor_id: str
+    consultorio_id: str
     appointment_date: datetime
     duration_minutes: int = 30
     notes: Optional[str] = None
