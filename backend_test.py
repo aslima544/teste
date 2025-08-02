@@ -396,6 +396,17 @@ class ConsultorioAPITester:
         else:
             self.log_test("Appointment Conflict Detection", False, f"{details} - Conflict not detected properly")
             return False
+
+    def test_delete_patient(self, patient_id: str):
+        """Test delete patient endpoint"""
+        success, data, details = self.make_request('DELETE', f'/api/patients/{patient_id}', expected_status=200)
+        
+        if success:
+            self.log_test("Delete Patient", True, f"{details} - Patient deleted")
+            return True
+        else:
+            self.log_test("Delete Patient", False, details)
+            return False
         """Test delete patient endpoint"""
         success, data, details = self.make_request('DELETE', f'/api/patients/{patient_id}', expected_status=200)
         
