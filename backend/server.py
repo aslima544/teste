@@ -670,8 +670,28 @@ async def create_appointment(appointment: AppointmentCreate, current_user: dict 
 
 @app.get("/api/appointments", response_model=List[Appointment])
 async def get_appointments(current_user: dict = Depends(get_current_user)):
-    appointments = list(db.appointments.find({}))
-    return [serialize_doc(appointment) for appointment in appointments]
+    try:
+        appointments = list(db.appointments.find({}))
+        result = []
+        for appointment in appointments:
+            # Ensure all required fields exist with defaults
+            appointment_data = {
+                "id": appointment.get("id", str(appointment.get("_id", ""))),
+                "patient_id": appointment.get("patient_id", ""),
+                "doctor_id": appointment.get("doctor_id", ""),
+                "consultorio_id": appointment.get("consultorio_id", ""),
+                "appointment_date": appointment.get("appointment_date", datetime.utcnow()),
+                "duration_minutes": appointment.get("duration_minutes", 30),
+                "notes": appointment.get("notes", ""),
+                "status": appointment.get("status", "scheduled"),
+                "created_at": appointment.get("created_at", datetime.utcnow()),
+                "updated_at": appointment.get("updated_at", datetime.utcnow())
+            }
+            result.append(appointment_data)
+        return result
+    except Exception as e:
+        print(f"Error in get_appointments: {str(e)}")
+        return []
 
 @app.get("/api/appointments/{appointment_id}", response_model=Appointment)
 async def get_appointment(appointment_id: str, current_user: dict = Depends(get_current_user)):
