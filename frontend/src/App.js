@@ -1147,7 +1147,7 @@ const App = () => {
   const ConsultoriosTab = () => (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Consultórios</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Consultórios & Mapa de Salas</h1>
         <button
           onClick={() => setShowConsultorioForm(true)}
           className="btn-primary"
@@ -1157,13 +1157,156 @@ const App = () => {
         </button>
       </div>
 
+      {/* Mapa Visual de Salas */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="card">
+          <h2 className="text-lg font-medium text-gray-900 mb-4">🏢 Consultórios Fixos (ESF 1-5)</h2>
+          <div className="space-y-3">
+            {weeklySchedule.fixed_consultorios?.map((consultorio) => (
+              <div key={consultorio.id} className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border border-blue-200">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-blue-500 text-white rounded-xl flex items-center justify-center text-lg font-bold shadow-lg">
+                    {consultorio.name}
+                  </div>
+                  <div>
+                    <div className="font-semibold text-gray-900">{consultorio.team}</div>
+                    <div className="text-sm text-blue-600 font-medium">{consultorio.schedule}</div>
+                    <div className="text-xs text-gray-500">{consultorio.location}</div>
+                  </div>
+                </div>
+                <div className="text-xs bg-blue-200 text-blue-800 px-3 py-1 rounded-full font-medium">
+                  FIXO
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="card">
+          <h2 className="text-lg font-medium text-gray-900 mb-4">🔄 Consultórios Rotativos (6-8)</h2>
+          <div className="space-y-3">
+            {weeklySchedule.rotative_consultorios?.map((consultorio) => (
+              <div key={consultorio.id} className="flex items-center justify-between p-4 bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg border border-orange-200">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-orange-500 text-white rounded-xl flex items-center justify-center text-lg font-bold shadow-lg">
+                    {consultorio.name}
+                  </div>
+                  <div>
+                    <div className="font-semibold text-gray-900">
+                      {consultorio.name === 'C6' ? 'Especialistas' : 
+                       consultorio.name === 'C7' ? 'Apoio/Esp.' : 
+                       'Coringa'}
+                    </div>
+                    <div className="text-xs text-gray-500">{consultorio.location}</div>
+                    <div className="text-xs text-orange-600">
+                      {consultorio.name === 'C8' ? 'E-Multi/Apoio/Reserva' : 'Variável por dia'}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-xs bg-orange-200 text-orange-800 px-3 py-1 rounded-full font-medium">
+                  ROTATIVO
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Cronograma Detalhado */}
+      {weeklySchedule.schedule_grid && Object.keys(weeklySchedule.schedule_grid).length > 0 && (
+        <div className="card">
+          <h2 className="text-lg font-medium text-gray-900 mb-4">📅 Cronograma Semanal Detalhado</h2>
+          <div className="overflow-x-auto">
+            <table className="min-w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border border-gray-300 px-4 py-3 text-left text-sm font-bold text-gray-700">Consultório</th>
+                  <th className="border border-gray-300 px-4 py-3 text-center text-sm font-bold text-gray-700">Segunda</th>
+                  <th className="border border-gray-300 px-4 py-3 text-center text-sm font-bold text-gray-700">Terça</th>
+                  <th className="border border-gray-300 px-4 py-3 text-center text-sm font-bold text-gray-700">Quarta</th>
+                  <th className="border border-gray-300 px-4 py-3 text-center text-sm font-bold text-gray-700">Quinta</th>
+                  <th className="border border-gray-300 px-4 py-3 text-center text-sm font-bold text-gray-700">Sexta</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Object.entries(weeklySchedule.schedule_grid).map(([consultorioName, schedule]) => (
+                  <tr key={consultorioName} className="hover:bg-gray-50">
+                    <td className="border border-gray-300 px-4 py-3 font-bold text-center bg-orange-100 text-orange-800">
+                      {consultorioName}
+                    </td>
+                    {['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta'].map((day) => (
+                      <td key={day} className="border border-gray-300 px-2 py-3">
+                        <div className="space-y-2">
+                          <div className={`text-xs px-2 py-1 rounded text-center font-medium ${
+                            schedule[day]?.morning === 'Livre' ? 'bg-gray-100 text-gray-500' :
+                            schedule[day]?.morning?.includes('Cardiologia') ? 'bg-red-100 text-red-700' :
+                            schedule[day]?.morning?.includes('Acupuntura') ? 'bg-green-100 text-green-700' :
+                            schedule[day]?.morning?.includes('Pediatria') ? 'bg-pink-100 text-pink-700' :
+                            schedule[day]?.morning?.includes('Ginecologista') ? 'bg-purple-100 text-purple-700' :
+                            schedule[day]?.morning?.includes('E-MULTI') ? 'bg-blue-100 text-blue-700' :
+                            schedule[day]?.morning?.includes('Médico Apoio') ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-gray-100 text-gray-700'
+                          }`}>
+                            ☀️ {schedule[day]?.morning || 'Livre'}
+                          </div>
+                          <div className={`text-xs px-2 py-1 rounded text-center font-medium ${
+                            schedule[day]?.afternoon === 'Livre' ? 'bg-gray-100 text-gray-500' :
+                            schedule[day]?.afternoon?.includes('Cardiologia') ? 'bg-red-100 text-red-700' :
+                            schedule[day]?.afternoon?.includes('Acupuntura') ? 'bg-green-100 text-green-700' :
+                            schedule[day]?.afternoon?.includes('Pediatria') ? 'bg-pink-100 text-pink-700' :
+                            schedule[day]?.afternoon?.includes('Ginecologista') ? 'bg-purple-100 text-purple-700' :
+                            schedule[day]?.afternoon?.includes('E-MULTI') ? 'bg-blue-100 text-blue-700' :
+                            schedule[day]?.afternoon?.includes('Médico Apoio') ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-gray-100 text-gray-700'
+                          }`}>
+                            🌙 {schedule[day]?.afternoon || 'Livre'}
+                          </div>
+                        </div>
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          
+          {/* Legenda e Observações */}
+          <div className="mt-6 bg-gray-50 p-4 rounded-lg">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">📝 Observações Importantes:</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+              <div>
+                <div className="font-medium text-gray-700 mb-2">🏠 Visita Domiciliar:</div>
+                <ul className="list-disc list-inside space-y-1 text-xs">
+                  <li>Segunda-feira: ESF sai para visitas</li>
+                  <li>Quarta-feira: ESF sai para visitas</li>
+                  <li>Libera parte do fluxo das salas</li>
+                </ul>
+              </div>
+              <div>
+                <div className="font-medium text-gray-700 mb-2">🔧 Sistema de Apoio:</div>
+                <ul className="list-disc list-inside space-y-1 text-xs">
+                  <li>C7/C8: Médico Apoio sempre alocado</li>
+                  <li>C8: Funciona como coringa/reserva</li>
+                  <li>Sobredemanda direcionada para C8</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tabela Administrativa */}
       <div className="card">
+        <h2 className="text-lg font-medium text-gray-900 mb-4">⚙️ Gerenciar Consultórios</h2>
         <div className="overflow-hidden">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Nome
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Tipo
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Localização
@@ -1182,8 +1325,26 @@ const App = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {consultorios.map((consultorio) => (
                 <tr key={consultorio.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {consultorio.name}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3 ${
+                        consultorio.occupancy_type === 'fixed' ? 'bg-blue-500' : 'bg-orange-500'
+                      }`}>
+                        {consultorio.name}
+                      </div>
+                      <div className="text-sm font-medium text-gray-900">
+                        {consultorio.name}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      consultorio.occupancy_type === 'fixed' 
+                        ? 'bg-blue-100 text-blue-800' 
+                        : 'bg-orange-100 text-orange-800'
+                    }`}>
+                      {consultorio.occupancy_type === 'fixed' ? 'Fixo' : 'Rotativo'}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {consultorio.location || '-'}
