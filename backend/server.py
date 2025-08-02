@@ -316,6 +316,52 @@ async def get_doctor(doctor_id: str, current_user: dict = Depends(get_current_us
         raise HTTPException(status_code=404, detail="Doctor not found")
     return serialize_doc(doctor)
 
+# Consultorio Routes
+@app.post("/api/consultorios", response_model=Consultorio)
+async def create_consultorio(consultorio: ConsultorioCreate, current_user: dict = Depends(get_current_user)):
+    consultorio_data = {
+        "id": str(uuid.uuid4()),
+        **consultorio.dict(),
+        "created_at": datetime.utcnow()
+    }
+    
+    result = db.consultorios.insert_one(consultorio_data)
+    created_consultorio = db.consultorios.find_one({"_id": result.inserted_id})
+    return serialize_doc(created_consultorio)
+
+@app.get("/api/consultorios", response_model=List[Consultorio])
+async def get_consultorios(current_user: dict = Depends(get_current_user)):
+    consultorios = list(db.consultorios.find({"is_active": True}))
+    return [serialize_doc(consultorio) for consultorio in consultorios]
+
+@app.get("/api/consultorios/{consultorio_id}", response_model=Consultorio)
+async def get_consultorio(consultorio_id: str, current_user: dict = Depends(get_current_user)):
+    consultorio = db.consultorios.find_one({"id": consultorio_id})
+    if not consultorio:
+        raise HTTPException(status_code=404, detail="Consultório not found")
+    return serialize_doc(consultorio)
+
+@app.put("/api/consultorios/{consultorio_id}", response_model=Consultorio)
+async def update_consultorio(consultorio_id: str, consultorio_update: ConsultorioCreate, current_user: dict = Depends(get_current_user)):
+    update_data = {
+        **consultorio_update.dict(),
+        "updated_at": datetime.utcnow()
+    }
+    
+    result = db.consultorios.update_one({"id": consultorio_id}, {"$set": update_data})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Consultório not found")
+    
+    updated_consultorio = db.consultorios.find_one({"id": consultorio_id})
+    return serialize_doc(updated_consultorio)
+
+@app.delete("/api/consultorios/{consultorio_id}")
+async def delete_consultorio(consultorio_id: str, current_user: dict = Depends(get_current_user)):
+    result = db.consultorios.update_one({"id": consultorio_id}, {"$set": {"is_active": False}})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Consultório not found")
+    return {"message": "Consultório deleted successfully"}
+
 # Appointment Routes
 @app.post("/api/appointments", response_model=Appointment)
 async def create_appointment(appointment: AppointmentCreate, current_user: dict = Depends(get_current_user)):
