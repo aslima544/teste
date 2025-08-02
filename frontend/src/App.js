@@ -810,7 +810,7 @@ const App = () => {
       {dashboardStats.consultorio_stats && dashboardStats.consultorio_stats.length > 0 && (
         <div className="card">
           <h2 className="text-lg font-medium text-gray-900 mb-4">Ocupação dos Consultórios Hoje</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {dashboardStats.consultorio_stats.map((consultorio) => (
               <div key={consultorio.id} className="border border-gray-200 rounded-lg p-4">
                 <div className="flex items-center justify-between">
@@ -829,6 +829,108 @@ const App = () => {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Mapa de Salas - Fixed Schedule */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="card">
+          <h2 className="text-lg font-medium text-gray-900 mb-4">📌 Consultórios Fixos (ESF)</h2>
+          <div className="space-y-3">
+            {weeklySchedule.fixed_consultorios?.map((consultorio) => (
+              <div key={consultorio.id} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                    {consultorio.name}
+                  </div>
+                  <div>
+                    <div className="font-medium text-gray-900">{consultorio.team}</div>
+                    <div className="text-sm text-gray-600">{consultorio.location}</div>
+                  </div>
+                </div>
+                <div className="text-sm font-medium text-blue-700">
+                  {consultorio.schedule}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="card">
+          <h2 className="text-lg font-medium text-gray-900 mb-4">🔄 Consultórios Rotativos</h2>
+          <div className="space-y-3">
+            {weeklySchedule.rotative_consultorios?.map((consultorio) => (
+              <div key={consultorio.id} className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                    {consultorio.name}
+                  </div>
+                  <div>
+                    <div className="font-medium text-gray-900">{consultorio.description}</div>
+                    <div className="text-sm text-gray-600">{consultorio.location}</div>
+                  </div>
+                </div>
+                <div className="text-xs text-orange-700 bg-orange-100 px-2 py-1 rounded">
+                  Uso Variável
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Cronograma Semanal */}
+      {weeklySchedule.schedule_grid && Object.keys(weeklySchedule.schedule_grid).length > 0 && (
+        <div className="card">
+          <h2 className="text-lg font-medium text-gray-900 mb-4">🗓️ Cronograma Semanal (Consultórios Rotativos)</h2>
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Consultório</th>
+                  <th className="px-4 py-2 text-center text-sm font-medium text-gray-700">Segunda</th>
+                  <th className="px-4 py-2 text-center text-sm font-medium text-gray-700">Terça</th>
+                  <th className="px-4 py-2 text-center text-sm font-medium text-gray-700">Quarta</th>
+                  <th className="px-4 py-2 text-center text-sm font-medium text-gray-700">Quinta</th>
+                  <th className="px-4 py-2 text-center text-sm font-medium text-gray-700">Sexta</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {Object.entries(weeklySchedule.schedule_grid).map(([consultorioName, schedule]) => (
+                  <tr key={consultorioName} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 font-medium text-gray-900">{consultorioName}</td>
+                    {['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta'].map((day) => (
+                      <td key={day} className="px-4 py-3 text-center">
+                        <div className="space-y-1">
+                          <div className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
+                            M: {schedule[day]?.morning || 'Livre'}
+                          </div>
+                          <div className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                            T: {schedule[day]?.afternoon || 'Livre'}
+                          </div>
+                        </div>
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          
+          {/* Legend */}
+          <div className="mt-4 flex flex-wrap gap-4 text-xs text-gray-600">
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-green-100 rounded"></div>
+              <span>M = Manhã</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-blue-100 rounded"></div>
+              <span>T = Tarde</span>
+            </div>
+            <div className="text-sm text-gray-500 ml-4">
+              📝 Visita Domiciliar: Segunda e Quarta (ESF parcialmente liberado)
+            </div>
           </div>
         </div>
       )}
