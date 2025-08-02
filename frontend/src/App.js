@@ -33,6 +33,7 @@ const App = () => {
   const [consultorios, setConsultorios] = useState([]);
   const [appointments, setAppointments] = useState([]);
   const [dashboardStats, setDashboardStats] = useState({});
+  const [weeklySchedule, setWeeklySchedule] = useState({});
   
   // Form states
   const [showPatientForm, setShowPatientForm] = useState(false);
