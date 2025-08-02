@@ -1205,6 +1205,7 @@ const App = () => {
         {activeTab === 'dashboard' && <Dashboard />}
         {activeTab === 'patients' && <PatientsTab />}
         {activeTab === 'doctors' && <DoctorsTab />}
+        {activeTab === 'consultorios' && <ConsultoriosTab />}
       </main>
 
       {/* Modals */}
