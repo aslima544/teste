@@ -365,7 +365,98 @@ async def delete_consultorio(consultorio_id: str, current_user: dict = Depends(g
         raise HTTPException(status_code=404, detail="Consultório not found")
     return {"message": "Consultório deleted successfully"}
 
-# Appointment Routes
+# Get consultorio availability for a specific day
+@app.get("/api/consultorios/availability/{day_of_week}")
+async def get_consultorio_availability(day_of_week: str, current_user: dict = Depends(get_current_user)):
+    """
+    Get availability of all consultorios for a specific day of week
+    day_of_week: monday, tuesday, wednesday, thursday, friday, saturday, sunday
+    """
+    consultorios = list(db.consultorios.find({"is_active": True}))
+    availability = []
+    
+    for consultorio in consultorios:
+        consultorio_data = serialize_doc(consultorio)
+        
+        if consultorio["occupancy_type"] == "fixed":
+            # Fixed schedule - ESF teams
+            schedule_info = consultorio.get("fixed_schedule", {})
+            availability.append({
+                **consultorio_data,
+                "day_schedule": {
+                    "team": schedule_info.get("team", "N/A"),
+                    "start_time": schedule_info.get("start", "N/A"),
+                    "end_time": schedule_info.get("end", "N/A"),
+                    "type": "fixed"
+                }
+            })
+        else:
+            # Rotative schedule - check weekly schedule
+            weekly_schedule = consultorio.get("weekly_schedule", {})
+            day_schedule = weekly_schedule.get(day_of_week.lower(), {})
+            
+            availability.append({
+                **consultorio_data,
+                "day_schedule": {
+                    "morning": day_schedule.get("morning", "Livre"),
+                    "afternoon": day_schedule.get("afternoon", "Livre"),
+                    "type": "rotative"
+                }
+            })
+    
+    return availability
+
+# Get weekly schedule overview
+@app.get("/api/consultorios/weekly-schedule")
+async def get_weekly_schedule(current_user: dict = Depends(get_current_user)):
+    """Get complete weekly schedule for all consultorios"""
+    consultorios = list(db.consultorios.find({"is_active": True}))
+    
+    weekly_data = {
+        "fixed_consultorios": [],
+        "rotative_consultorios": [],
+        "schedule_grid": {}
+    }
+    
+    days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+    day_names = {
+        "monday": "Segunda",
+        "tuesday": "Terça", 
+        "wednesday": "Quarta",
+        "thursday": "Quinta",
+        "friday": "Sexta",
+        "saturday": "Sábado",
+        "sunday": "Domingo"
+    }
+    
+    for consultorio in consultorios:
+        consultorio_data = serialize_doc(consultorio)
+        
+        if consultorio["occupancy_type"] == "fixed":
+            schedule_info = consultorio.get("fixed_schedule", {})
+            weekly_data["fixed_consultorios"].append({
+                **consultorio_data,
+                "team": schedule_info.get("team", "N/A"),
+                "schedule": f"{schedule_info.get('start', 'N/A')} - {schedule_info.get('end', 'N/A')}"
+            })
+        else:
+            weekly_data["rotative_consultorios"].append(consultorio_data)
+            
+            # Build schedule grid for rotative consultorios
+            if consultorio["name"] not in weekly_data["schedule_grid"]:
+                weekly_data["schedule_grid"][consultorio["name"]] = {}
+            
+            weekly_schedule = consultorio.get("weekly_schedule", {})
+            for day in days:
+                day_schedule = weekly_schedule.get(day, {})
+                weekly_data["schedule_grid"][consultorio["name"]][day_names[day]] = {
+                    "morning": day_schedule.get("morning", "Livre"),
+                    "afternoon": day_schedule.get("afternoon", "Livre")
+                }
+    
+    return weekly_data
+
+# Initialize predefined consultorios
 @app.post("/api/appointments", response_model=Appointment)
 async def create_appointment(appointment: AppointmentCreate, current_user: dict = Depends(get_current_user)):
     # Check if patient exists
