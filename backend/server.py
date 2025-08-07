@@ -11,6 +11,7 @@ import os
 from dotenv import load_dotenv
 import uuid
 from bson import ObjectId
+from datetime import datetime
 
 load_dotenv()
 
@@ -30,7 +31,7 @@ MONGO_URL = os.getenv("MONGO_URL", "mongodb://localhost:27017")
 DATABASE_NAME = os.getenv("DATABASE_NAME", "consultorio_db")
 SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-for-jwt-tokens-consultorio")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "120"))
 
 client = MongoClient(MONGO_URL)
 db = client[DATABASE_NAME]
@@ -129,6 +130,16 @@ class Token(BaseModel):
 class LoginRequest(BaseModel):
     username: str
     password: str
+
+class ProcedimentoBase(BaseModel):
+    nome: str
+    descricao: Optional[str] = None
+
+class ProcedimentoCreate(ProcedimentoBase):
+    pass
+
+class Procedimento(ProcedimentoBase):
+    id: str
 
 # Helper Functions
 def verify_password(plain_password, hashed_password):
@@ -544,6 +555,27 @@ async def get_doctor(doctor_id: str, current_user: dict = Depends(get_current_us
         raise HTTPException(status_code=404, detail="Doctor not found")
     return serialize_doc(doctor)
 
+@app.put("/api/doctors/{doctor_id}", response_model=Doctor)
+async def update_doctor(doctor_id: str, doctor_update: DoctorCreate, current_user: dict = Depends(get_current_user)):
+    update_data = {
+        **doctor_update.dict(),
+        "updated_at": datetime.utcnow()
+    }
+    
+    result = db.doctors.update_one({"id": doctor_id}, {"$set": update_data})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Doctor not found")
+    
+    updated_doctor = db.doctors.find_one({"id": doctor_id})
+    return serialize_doc(updated_doctor)
+
+@app.delete("/api/doctors/{doctor_id}")
+async def delete_doctor(doctor_id: str, current_user: dict = Depends(get_current_user)):
+    result = db.doctors.delete_one({"id": doctor_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Doctor not found")
+    return {"message": "Doctor deleted successfully"}
+
 # Consultorio Routes
 @app.post("/api/consultorios", response_model=Consultorio)
 async def create_consultorio(consultorio: ConsultorioCreate, current_user: dict = Depends(get_current_user)):
@@ -567,7 +599,7 @@ async def get_consultorios(current_user: dict = Depends(get_current_user)):
 async def get_consultorio_availability(day_of_week: str, current_user: dict = Depends(get_current_user)):
     """
     Get availability of all consultorios for a specific day of week
-    day_of_week: monday, tuesday, wednesday, thursday, friday, saturday, sunday
+    day_of_week: monday, tuesday, wednesday, thursday, friday
     """
     consultorios = list(db.consultorios.find({"is_active": True}))
     availability = []
@@ -615,15 +647,14 @@ async def get_weekly_schedule(current_user: dict = Depends(get_current_user)):
         "schedule_grid": {}
     }
     
-    days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+    days = ["monday", "tuesday", "wednesday", "thursday", "friday"]
     day_names = {
         "monday": "Segunda",
         "tuesday": "Terça", 
         "wednesday": "Quarta",
         "thursday": "Quinta",
         "friday": "Sexta",
-        "saturday": "Sábado",
-        "sunday": "Domingo"
+        
     }
     
     for consultorio in consultorios:
@@ -681,6 +712,34 @@ async def delete_consultorio(consultorio_id: str, current_user: dict = Depends(g
         raise HTTPException(status_code=404, detail="Consultório not found")
     return {"message": "Consultório deleted successfully"}
 
+
+# Rotas CRUD para procedimentos
+@app.post("/api/procedimentos", response_model=Procedimento)
+async def create_procedimento(procedimento: ProcedimentoCreate, current_user: dict = Depends(get_current_user)):
+    procedimento_data = {
+        "id": str(uuid.uuid4()),
+        "nome": procedimento.nome,
+        "descricao": procedimento.descricao
+    }
+    db.procedimentos.insert_one(procedimento_data)
+    return procedimento_data
+
+@app.get("/api/procedimentos", response_model=List[Procedimento])
+async def get_procedimentos(current_user: dict = Depends(get_current_user)):
+    procedimentos = list(db.procedimentos.find({}))
+    return [serialize_doc(p) for p in procedimentos]
+
+@app.put("/api/procedimentos/{procedimento_id}", response_model=Procedimento)
+async def update_procedimento(procedimento_id: str, procedimento: ProcedimentoCreate, current_user: dict = Depends(get_current_user)):
+    db.procedimentos.update_one({"id": procedimento_id}, {"$set": procedimento.dict()})
+    updated = db.procedimentos.find_one({"id": procedimento_id})
+    return serialize_doc(updated)
+
+@app.delete("/api/procedimentos/{procedimento_id}")
+async def delete_procedimento(procedimento_id: str, current_user: dict = Depends(get_current_user)):
+    db.procedimentos.delete_one({"id": procedimento_id})
+    return {"message": "Procedimento excluído com sucesso"}
+
 # Initialize predefined consultorios
 @app.post("/api/appointments", response_model=Appointment)
 async def create_appointment(appointment: AppointmentCreate, current_user: dict = Depends(get_current_user)):
@@ -688,6 +747,9 @@ async def create_appointment(appointment: AppointmentCreate, current_user: dict 
     patient = db.patients.find_one({"id": appointment.patient_id})
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
+
+    if appointment.appointment_date < datetime.utcnow():
+        raise HTTPException(status_code=400, detail="Não é possível agendar para um horário que já passou.")
     
     # Check if doctor exists
     doctor = db.doctors.find_one({"id": appointment.doctor_id})
@@ -742,12 +804,26 @@ async def get_appointments(current_user: dict = Depends(get_current_user)):
         appointments = list(db.appointments.find({}))
         result = []
         for appointment in appointments:
-            # Ensure all required fields exist with defaults
+            # Busca o nome do paciente
+            patient = db.patients.find_one({"id": appointment.get("patient_id", "")})
+            patient_name = patient["name"] if patient else "Desconhecido"
+
+            # Busca o nome do médico
+            doctor = db.doctors.find_one({"id": appointment.get("doctor_id", "")})
+            doctor_name = doctor["name"] if doctor else "Desconhecido"
+
+            # Busca o nome do consultório (opcional)
+            consultorio = db.consultorios.find_one({"id": appointment.get("consultorio_id", "")})
+            consultorio_name = consultorio["name"] if consultorio else "N/A"
+
             appointment_data = {
                 "id": appointment.get("id", str(appointment.get("_id", ""))),
                 "patient_id": appointment.get("patient_id", ""),
+                "patient_name": patient_name,
                 "doctor_id": appointment.get("doctor_id", ""),
+                "doctor_name": doctor_name,
                 "consultorio_id": appointment.get("consultorio_id", ""),
+                "consultorio_name": consultorio_name,
                 "appointment_date": appointment.get("appointment_date", datetime.utcnow()),
                 "duration_minutes": appointment.get("duration_minutes", 30),
                 "notes": appointment.get("notes", ""),
@@ -768,17 +844,14 @@ async def get_appointment(appointment_id: str, current_user: dict = Depends(get_
         raise HTTPException(status_code=404, detail="Appointment not found")
     return serialize_doc(appointment)
 
-@app.put("/api/appointments/{appointment_id}", response_model=Appointment)
-async def update_appointment(appointment_id: str, appointment_update: AppointmentCreate, current_user: dict = Depends(get_current_user)):
-    update_data = {
-        **appointment_update.dict(),
-        "updated_at": datetime.utcnow()
-    }
-    
-    result = db.appointments.update_one({"id": appointment_id}, {"$set": update_data})
+@app.put("/api/appointments/{appointment_id}/cancel", response_model=Appointment)
+async def cancel_appointment(appointment_id: str, current_user: dict = Depends(get_current_user)):
+    result = db.appointments.update_one(
+        {"id": appointment_id},
+        {"$set": {"status": "canceled", "updated_at": datetime.utcnow()}}
+    )
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Appointment not found")
-    
     updated_appointment = db.appointments.find_one({"id": appointment_id})
     return serialize_doc(updated_appointment)
 
@@ -800,7 +873,8 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
         "appointment_date": {
             "$gte": today,
             "$lt": tomorrow
-        }
+        },
+        "status": {"$ne": "canceled"}
     })
     
     # Recent appointments with patient, doctor and consultorio names

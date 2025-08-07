@@ -15,6 +15,154 @@ import {
   ClipboardList
 } from 'lucide-react';
 import './App.css';
+import ConsultorioSlots from './components/ConsultorioSlots';
+import horariosConsultorios from './constants/horariosConsultorios';
+
+
+function ModalAgendamento({ aberto, consultorio, horario, pacientes, doctors, procedimentos, onClose, onSubmit }) {
+  const [pacienteId, setPacienteId] = useState('');
+  const [doctorId, setDoctorId] = useState('');
+  const [procedimentoId, setProcedimentoId] = useState('');
+  const [dataAtendimento, setDataAtendimento] = useState(new Date().toISOString().slice(0,10));
+  const [duration, setDuration] = useState(30);
+
+  const coresProcedimentos = [
+  '#fbbf24', // amarelo
+  '#60a5fa', // azul
+  '#34d399', // verde
+  '#f87171', // vermelho
+  '#a78bfa', // roxo
+  '#f472b6', // rosa
+  '#facc15', // amarelo ouro
+  '#38bdf8', // azul claro
+  '#4ade80', // verde claro
+  '#fca5a5', // vermelho claro
+  '#c084fc', // lilás
+  '#fdba74', // laranja claro
+  '#a3e635', // verde limão
+  '#fcd34d', // amarelo pastel
+  '#818cf8', // azul violeta
+  '#f9a8d4', // rosa claro
+  '#fbb6ce', // rosa bebê
+  '#bef264', // verde limão claro
+  '#fef08a', // amarelo claro
+  '#a1a1aa', // cinza
+];
+
+  if (!aberto) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 max-w-md w-full">
+        <h2 className="text-lg font-bold mb-4">
+          Agendar em {consultorio?.name || ''} às {horario}
+        </h2>
+        <form
+          onSubmit={e => {
+            e.preventDefault();
+            onSubmit({
+              patient_id: pacienteId,
+              doctor_id: doctorId,
+              consultorio_id: consultorio?.id,
+              dataAtendimento,
+              duration,
+              procedimentoId
+            });
+            setPacienteId('');
+            setDoctorId('');
+            setProcedimentoId('');
+            setDataAtendimento(new Date().toISOString().slice(0,10)); // <-- adicione esta linha
+            setDuration(30);
+          }}
+          className="space-y-4"
+        >
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Data</label>
+            <input
+              type="date"
+              className="input-field mt-1"
+              value={dataAtendimento}
+              onChange={e => setDataAtendimento(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Paciente</label>
+            <select
+              className="input-field mt-1"
+              value={pacienteId}
+              onChange={e => setPacienteId(e.target.value)}
+              required
+            >
+              <option value="">Selecione um paciente</option>
+              {pacientes.map(p => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Médico</label>
+            <select
+              className="input-field mt-1"
+              value={doctorId}
+              onChange={e => setDoctorId(e.target.value)}
+              required
+            >
+              <option value="">Selecione um médico</option>
+              {doctors.map(d => (
+                <option key={d.id} value={d.id}>{d.name} - {d.specialty}</option>
+              ))}
+            </select>
+          </div>
+          
+          <div>
+              <label className="block text-sm font-medium text-gray-700">Procedimento</label>
+              <select
+                className="input-field mt-1"
+                value={procedimentoId}
+                onChange={e => setProcedimentoId(e.target.value)}
+                required
+              >
+                <option value="">Selecione um procedimento</option>
+                  {procedimentos && procedimentos.map((p, idx) => (
+                    <option
+                      key={p.id} value={p.id}
+                      
+                    >
+                      {p.nome}
+                    </option>
+                  ))}
+              </select>
+            </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Duração (minutos)</label>
+            <select
+              className="input-field mt-1"
+              value={duration}
+              onChange={e => setDuration(Number(e.target.value))}
+              required
+            >
+              <option value={15}>15</option>
+              <option value={30}>30</option>
+              <option value={45}>45</option>
+              <option value={60}>60</option>
+            </select>
+          </div>
+          <div className="flex space-x-3 pt-4">
+            <button type="submit" className="btn-primary flex-1">
+              Agendar
+            </button>
+            <button type="button" onClick={onClose} className="btn-secondary flex-1">
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -25,7 +173,7 @@ const App = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); 
   
   // Data states
   const [patients, setPatients] = useState([]);
@@ -35,6 +183,9 @@ const App = () => {
   const [appointments, setAppointments] = useState([]);
   const [dashboardStats, setDashboardStats] = useState({});
   const [weeklySchedule, setWeeklySchedule] = useState({});
+  const [procedimentos, setProcedimentos] = useState([]);
+  const [dataSelecionada, setDataSelecionada] = useState(new Date().toISOString().slice(0, 10));
+  
   
   // Form states
   const [showPatientForm, setShowPatientForm] = useState(false);
@@ -47,6 +198,17 @@ const App = () => {
   const [editingConsultorio, setEditingConsultorio] = useState(null);
   const [editingUser, setEditingUser] = useState(null);
 
+  // Estados para slots dos consultórios
+  const [consultorioSelecionado, setConsultorioSelecionado] = useState(null);
+  const [agendamentos, setAgendamentos] = useState([]);
+
+  // Estado do modal de agendamento
+  const [modalAgendamento, setModalAgendamento] = useState({
+    aberto: false,
+    consultorio: null,
+    horario: null,
+  });
+  
   // Set auth token
   useEffect(() => {
     if (token) {
@@ -55,6 +217,47 @@ const App = () => {
     }
   }, [token]);
 
+  // Buscar procedimentos ao abrir o app
+  useEffect(() => {
+    fetchProcedimentos();
+  }, []);
+
+  // Buscar procedimentos ao abrir o modal de agendamento
+  useEffect(() => {
+    if (modalAgendamento.aberto) {
+      fetchProcedimentos();
+    }
+  }, [modalAgendamento.aberto]);
+
+  // Buscar agendamentos ao abrir a tela
+  useEffect(() => {
+    axios.get('/api/appointments')
+      .then(res => {
+        const ags = res.data.map(a => {
+          const dt = new Date(a.appointment_date);
+          return {
+            ...a,
+            horario: dt.toTimeString().slice(0,5),
+            data: dt.toISOString().slice(0,10),
+            duration: a.duration_minutes || 30,
+          };
+        });
+        setAgendamentos(ags);
+      })
+      .catch(err => {
+        if (err.response && err.response.status === 401) {
+          // Aqui você pode deslogar o usuário, redirecionar para login, etc.
+          // Exemplo:
+          handleLogout(); // se você já tem essa função no seu App
+          alert('Sua sessão expirou. Faça login novamente.');
+        } else {
+          console.error('Erro ao buscar agendamentos:', err);
+          setAgendamentos([]);
+        }
+      });
+  }, [consultorioSelecionado]);
+
+  
   // Fetch current user
   const fetchCurrentUser = async () => {
     try {
@@ -95,6 +298,15 @@ const App = () => {
     }
   };
 
+  const fetchProcedimentos = async () => {
+    try {
+      const res = await axios.get('/api/procedimentos');
+      setProcedimentos(res.data);
+    } catch (err) {
+      console.error('Erro ao buscar procedimentos:', err);
+    }
+  };
+ 
   // Login function
   const handleLogin = async (username, password) => {
     try {
@@ -284,6 +496,37 @@ const App = () => {
     }
   };
 
+  const handleUpdateDoctor = async (doctorId, doctorData) => {
+    try {
+      setLoading(true);
+      await axios.put(`/api/doctors/${doctorId}`, doctorData);
+      setEditingDoctor(null);
+      fetchDashboardData();
+      alert('Médico atualizado com sucesso!');
+    } catch (error) {
+      console.error('Error updating doctor:', error);
+      alert('Erro ao atualizar médico.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteDoctor = async (doctorId) => {
+    if (window.confirm('Tem certeza que deseja excluir este médico?')) {
+      try {
+        setLoading(true);
+        await axios.delete(`/api/doctors/${doctorId}`);                
+        await fetchDashboardData();        
+        alert('Médico excluído com sucesso!');
+      } catch (error) {
+        console.error('Error deleting doctor:', error);
+        alert('Erro ao excluir médico.');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
   // Appointment CRUD operations
   const handleCreateAppointment = async (appointmentData) => {
     try {
@@ -300,6 +543,23 @@ const App = () => {
     }
   };
 
+  const onCancelarAgendamento = async (agendamento) => {
+  if (window.confirm("Deseja liberar este horário?")) {
+    try {
+      await axios.put(`/api/appointments/${agendamento.id}/cancel`);
+      // Atualize os agendamentos após cancelar
+      const res = await axios.get('/api/appointments');
+      setAgendamentos(res.data);
+      // Atualize o dashboard também
+      fetchDashboardData();
+    } catch (err) {
+      alert('Erro ao liberar horário!');
+      console.error(err);
+    }
+  }
+};
+
+
   // Login Component
   const LoginForm = () => {
     const [username, setUsername] = useState('');
@@ -309,6 +569,7 @@ const App = () => {
       e.preventDefault();
       handleLogin(username, password);
     };
+       
 
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100">
@@ -357,10 +618,10 @@ const App = () => {
               {loading ? 'Entrando...' : 'Entrar'}
             </button>
           </form>
-          <div className="text-center text-sm text-gray-600">
-            <p>Usuário padrão: <strong>admin</strong></p>
+          {/*<div className="text-center text-sm text-gray-600">
+           <p>Usuário padrão: <strong>admin</strong></p>
             <p>Senha padrão: <strong>admin123</strong></p>
-          </div>
+          </div>*/}
         </div>
       </div>
     );
@@ -477,7 +738,7 @@ const App = () => {
     );
   };
 
-  // Doctor Form Component
+// Doctor Form Component
   const DoctorForm = ({ doctor, onSubmit, onCancel }) => {
     const [formData, setFormData] = useState({
       name: doctor?.name || '',
@@ -678,7 +939,7 @@ const App = () => {
     );
   };
 
-  // Consultorio Form Component
+   // Consultorio Form Component
   const ConsultorioForm = ({ consultorio, onSubmit, onCancel }) => {
     const [formData, setFormData] = useState({
       name: consultorio?.name || '',
@@ -1100,13 +1361,13 @@ const App = () => {
       <div className="card">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-medium text-gray-900">Consultas Recentes</h2>
-          <button
+          {/*<button
             onClick={() => setShowAppointmentForm(true)}
             className="btn-primary"
           >
             <Plus className="h-4 w-4 mr-2" />
             Nova Consulta
-          </button>
+          </button>*/}
         </div>
         <div className="overflow-hidden">
           <table className="min-w-full divide-y divide-gray-200">
@@ -1241,7 +1502,7 @@ const App = () => {
     </div>
   );
 
-  // Doctors Component
+  // DoctorsTab (corrigido)
   const DoctorsTab = () => (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -1275,6 +1536,9 @@ const App = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Telefone
                 </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Ações
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -1295,243 +1559,16 @@ const App = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {doctor.phone}
                   </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
-
-  // Consultorios Component
-  const ConsultoriosTab = () => (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Consultórios & Mapa de Salas</h1>
-        <button
-          onClick={() => setShowConsultorioForm(true)}
-          className="btn-primary"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Consultório
-        </button>
-      </div>
-
-      {/* Mapa Visual de Salas */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="card">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">🏢 Consultórios Fixos (ESF 1-5)</h2>
-          <div className="space-y-3">
-            {weeklySchedule.fixed_consultorios?.map((consultorio) => (
-              <div key={consultorio.id} className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border border-blue-200">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-blue-500 text-white rounded-xl flex items-center justify-center text-lg font-bold shadow-lg">
-                    {consultorio.name}
-                  </div>
-                  <div>
-                    <div className="font-semibold text-gray-900">{consultorio.team}</div>
-                    <div className="text-sm text-blue-600 font-medium">{consultorio.schedule}</div>
-                    <div className="text-xs text-gray-500">{consultorio.location}</div>
-                  </div>
-                </div>
-                <div className="text-xs bg-blue-200 text-blue-800 px-3 py-1 rounded-full font-medium">
-                  FIXO
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="card">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">🔄 Consultórios Rotativos (6-8)</h2>
-          <div className="space-y-3">
-            {weeklySchedule.rotative_consultorios?.map((consultorio) => (
-              <div key={consultorio.id} className="flex items-center justify-between p-4 bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg border border-orange-200">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-orange-500 text-white rounded-xl flex items-center justify-center text-lg font-bold shadow-lg">
-                    {consultorio.name}
-                  </div>
-                  <div>
-                    <div className="font-semibold text-gray-900">
-                      {consultorio.name === 'C6' ? 'Especialistas' : 
-                       consultorio.name === 'C7' ? 'Apoio/Esp.' : 
-                       'Coringa'}
-                    </div>
-                    <div className="text-xs text-gray-500">{consultorio.location}</div>
-                    <div className="text-xs text-orange-600">
-                      {consultorio.name === 'C8' ? 'E-Multi/Apoio/Reserva' : 'Variável por dia'}
-                    </div>
-                  </div>
-                </div>
-                <div className="text-xs bg-orange-200 text-orange-800 px-3 py-1 rounded-full font-medium">
-                  ROTATIVO
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Cronograma Detalhado */}
-      {weeklySchedule.schedule_grid && Object.keys(weeklySchedule.schedule_grid).length > 0 && (
-        <div className="card">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">📅 Cronograma Semanal Detalhado</h2>
-          <div className="overflow-x-auto">
-            <table className="min-w-full border-collapse">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="border border-gray-300 px-4 py-3 text-left text-sm font-bold text-gray-700">Consultório</th>
-                  <th className="border border-gray-300 px-4 py-3 text-center text-sm font-bold text-gray-700">Segunda</th>
-                  <th className="border border-gray-300 px-4 py-3 text-center text-sm font-bold text-gray-700">Terça</th>
-                  <th className="border border-gray-300 px-4 py-3 text-center text-sm font-bold text-gray-700">Quarta</th>
-                  <th className="border border-gray-300 px-4 py-3 text-center text-sm font-bold text-gray-700">Quinta</th>
-                  <th className="border border-gray-300 px-4 py-3 text-center text-sm font-bold text-gray-700">Sexta</th>
-                </tr>
-              </thead>
-              <tbody>
-                {Object.entries(weeklySchedule.schedule_grid).map(([consultorioName, schedule]) => (
-                  <tr key={consultorioName} className="hover:bg-gray-50">
-                    <td className="border border-gray-300 px-4 py-3 font-bold text-center bg-orange-100 text-orange-800">
-                      {consultorioName}
-                    </td>
-                    {['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta'].map((day) => (
-                      <td key={day} className="border border-gray-300 px-2 py-3">
-                        <div className="space-y-2">
-                          <div className={`text-xs px-2 py-1 rounded text-center font-medium ${
-                            schedule[day]?.morning === 'Livre' ? 'bg-gray-100 text-gray-500' :
-                            schedule[day]?.morning?.includes('Cardiologia') ? 'bg-red-100 text-red-700' :
-                            schedule[day]?.morning?.includes('Acupuntura') ? 'bg-green-100 text-green-700' :
-                            schedule[day]?.morning?.includes('Pediatria') ? 'bg-pink-100 text-pink-700' :
-                            schedule[day]?.morning?.includes('Ginecologista') ? 'bg-purple-100 text-purple-700' :
-                            schedule[day]?.morning?.includes('E-MULTI') ? 'bg-blue-100 text-blue-700' :
-                            schedule[day]?.morning?.includes('Médico Apoio') ? 'bg-yellow-100 text-yellow-700' :
-                            'bg-gray-100 text-gray-700'
-                          }`}>
-                            ☀️ {schedule[day]?.morning || 'Livre'}
-                          </div>
-                          <div className={`text-xs px-2 py-1 rounded text-center font-medium ${
-                            schedule[day]?.afternoon === 'Livre' ? 'bg-gray-100 text-gray-500' :
-                            schedule[day]?.afternoon?.includes('Cardiologia') ? 'bg-red-100 text-red-700' :
-                            schedule[day]?.afternoon?.includes('Acupuntura') ? 'bg-green-100 text-green-700' :
-                            schedule[day]?.afternoon?.includes('Pediatria') ? 'bg-pink-100 text-pink-700' :
-                            schedule[day]?.afternoon?.includes('Ginecologista') ? 'bg-purple-100 text-purple-700' :
-                            schedule[day]?.afternoon?.includes('E-MULTI') ? 'bg-blue-100 text-blue-700' :
-                            schedule[day]?.afternoon?.includes('Médico Apoio') ? 'bg-yellow-100 text-yellow-700' :
-                            'bg-gray-100 text-gray-700'
-                          }`}>
-                            🌙 {schedule[day]?.afternoon || 'Livre'}
-                          </div>
-                        </div>
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          
-          {/* Legenda e Observações */}
-          <div className="mt-6 bg-gray-50 p-4 rounded-lg">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">📝 Observações Importantes:</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
-              <div>
-                <div className="font-medium text-gray-700 mb-2">🏠 Visita Domiciliar:</div>
-                <ul className="list-disc list-inside space-y-1 text-xs">
-                  <li>Segunda-feira: ESF sai para visitas</li>
-                  <li>Quarta-feira: ESF sai para visitas</li>
-                  <li>Libera parte do fluxo das salas</li>
-                </ul>
-              </div>
-              <div>
-                <div className="font-medium text-gray-700 mb-2">🔧 Sistema de Apoio:</div>
-                <ul className="list-disc list-inside space-y-1 text-xs">
-                  <li>C7/C8: Médico Apoio sempre alocado</li>
-                  <li>C8: Funciona como coringa/reserva</li>
-                  <li>Sobredemanda direcionada para C8</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Tabela Administrativa */}
-      <div className="card">
-        <h2 className="text-lg font-medium text-gray-900 mb-4">⚙️ Gerenciar Consultórios</h2>
-        <div className="overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Nome
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Tipo
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Localização
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Capacidade
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Equipamentos
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Ações
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {consultorios.map((consultorio) => (
-                <tr key={consultorio.id}>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3 ${
-                        consultorio.occupancy_type === 'fixed' ? 'bg-blue-500' : 'bg-orange-500'
-                      }`}>
-                        {consultorio.name}
-                      </div>
-                      <div className="text-sm font-medium text-gray-900">
-                        {consultorio.name}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      consultorio.occupancy_type === 'fixed' 
-                        ? 'bg-blue-100 text-blue-800' 
-                        : 'bg-orange-100 text-orange-800'
-                    }`}>
-                      {consultorio.occupancy_type === 'fixed' ? 'Fixo' : 'Rotativo'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {consultorio.location || '-'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {consultorio.capacity} pessoa{consultorio.capacity > 1 ? 's' : ''}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
-                    <div className="max-w-xs">
-                      {consultorio.equipment && consultorio.equipment.length > 0 
-                        ? consultorio.equipment.slice(0, 2).join(', ') + 
-                          (consultorio.equipment.length > 2 ? '...' : '')
-                        : '-'
-                      }
-                    </div>
-                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">
                       <button
-                        onClick={() => setEditingConsultorio(consultorio)}
+                        onClick={() => setEditingDoctor(doctor)}
                         className="text-primary-600 hover:text-primary-900"
                       >
                         <Edit className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={() => handleDeleteConsultorio(consultorio.id)}
+                        onClick={() => handleDeleteDoctor(doctor.id)}
                         className="text-red-600 hover:text-red-900"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -1547,7 +1584,86 @@ const App = () => {
     </div>
   );
 
-  // Users Component
+ const ConsultoriosTab = () => (
+  <div className="space-y-6">
+    <div className="flex justify-between items-center">
+      <h1 className="text-2xl font-bold text-gray-900">Consultórios & Mapa de Salas</h1>
+      <button
+        onClick={() => setShowConsultorioForm(true)}
+        className="btn-primary"
+      >
+        <Plus className="h-4 w-4 mr-2" />
+        Novo Consultório
+      </button>
+    </div>
+
+    {/* Campo para selecionar a data */}
+    <div className="mb-4">
+      <label className="block text-sm font-medium text-gray-700">Data:</label>
+      <input
+        type="date"
+        className="input-field mt-1"
+        value={dataSelecionada}
+        onChange={e => setDataSelecionada(e.target.value)}
+      />
+    </div>
+
+    {/* Lista de consultórios fixos com botão para ver horários */}
+    <div className="card">
+      <h2 className="text-lg font-medium text-gray-900 mb-4">Consultórios Fixos</h2>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {consultorios.map(c => (
+          <div key={c.id} className="p-4 border rounded">
+            <div className="font-bold">{c.name}</div>
+            <div>
+              {c.fixed_schedule
+                ? `${c.fixed_schedule.start} - ${c.fixed_schedule.end}`
+                : '07:00 - 19:00'}
+            </div>
+            <button
+              className="btn-primary mt-2"
+              onClick={() => setConsultorioSelecionado(c.id)}
+            >
+              Ver horários
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    {/* Exibe os slots do consultório selecionado */}
+    {consultorioSelecionado && (
+      <div className="mt-6">
+        <h3 className="text-lg font-bold mb-2">
+          Horários do {
+            (consultorios.find(c => c.id === consultorioSelecionado) || {}).name
+          }
+          <button
+            className="ml-4 text-sm text-blue-600 underline"
+            onClick={() => setConsultorioSelecionado(null)}
+          >
+            Fechar
+          </button>
+        </h3>
+        <ConsultorioSlots
+          consultorio={consultorios.find(c => c.id === consultorioSelecionado)}
+          agendamentos={agendamentos}
+          dataSelecionada={dataSelecionada} // <-- aqui está a data!
+          onAgendar={horario =>
+            setModalAgendamento({
+              aberto: true,
+              consultorio: consultorios.find(c => c.id === consultorioSelecionado),
+              horario
+            })
+          }
+          onCancelarAgendamento={onCancelarAgendamento}
+        />
+      </div>
+    )}
+  </div>
+);
+
+   // Users Component
   const UsersTab = () => (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -1720,14 +1836,104 @@ const App = () => {
     </div>
   );
 
-  // Main App Layout
+  const ProceduresTab = () => {
+  const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [form, setForm] = useState({ nome: '', descricao: '' });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (editing) {
+        await axios.put(`/api/procedimentos/${editing.id}`, form);
+      } else {
+        await axios.post('/api/procedimentos', form);
+      }
+      setShowForm(false);
+      setEditing(null);
+      setForm({ nome: '', descricao: '' });
+      fetchProcedimentos();
+    } catch (err) {
+      alert('Erro ao salvar procedimento!');
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Deseja excluir este procedimento?')) {
+      await axios.delete(`/api/procedimentos/${id}`);
+      fetchProcedimentos();
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-900">Procedimentos</h1>
+        <button onClick={() => { setShowForm(true); setEditing(null); setForm({ nome: '', descricao: '' }); }} className="btn-primary">
+          <Plus className="h-4 w-4 mr-2" />
+          Novo Procedimento
+        </button>
+      </div>
+      <div className="card">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descrição</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {procedimentos.map((p) => (
+              <tr key={p.id}>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{p.nome}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{p.descricao || '-'}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <button onClick={() => { setEditing(p); setForm({ nome: p.nome, descricao: p.descricao }); setShowForm(true); }} className="text-primary-600 hover:text-primary-900 mr-2">
+                    <Edit className="h-4 w-4" />
+                  </button>
+                  <button onClick={() => handleDelete(p.id)} className="text-red-600 hover:text-red-900">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {showForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h2 className="text-lg font-bold mb-4">{editing ? 'Editar' : 'Novo'} Procedimento</h2>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Nome</label>
+                <input type="text" className="input-field mt-1" value={form.nome} onChange={e => setForm({ ...form, nome: e.target.value })} required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Descrição</label>
+                <textarea className="input-field mt-1" value={form.descricao} onChange={e => setForm({ ...form, descricao: e.target.value })} />
+              </div>
+              <div className="flex space-x-3 pt-4">
+                <button type="submit" className="btn-primary flex-1">{editing ? 'Atualizar' : 'Criar'}</button>
+                <button type="button" onClick={() => setShowForm(false)} className="btn-secondary flex-1">Cancelar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+
+ // Main App Layout
   if (!currentUser) {
     return <LoginForm />;
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Navigation */}
+  return (       
+   <div className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow-sm border-b border-gray-200">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
@@ -1784,6 +1990,19 @@ const App = () => {
                   <ClipboardList className="h-4 w-4 inline mr-2" />
                   Consultórios
                 </button>
+
+                <button
+                  onClick={() => setActiveTab('procedures')}
+                  className={`px-3 py-2 text-sm font-medium rounded-md ${
+                    activeTab === 'procedures'
+                      ? 'bg-primary-100 text-primary-700'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  <ClipboardList className="h-4 w-4 inline mr-2" />
+                  Procedimentos
+                </button>
+
                 {currentUser?.role === 'admin' && (
                   <button
                     onClick={() => setActiveTab('users')}
@@ -1812,15 +2031,84 @@ const App = () => {
           </div>
         </div>
       </nav>
-
-      {/* Main Content */}
+      
       <main className="mx-auto max-w-7xl py-6 px-4 sm:px-6 lg:px-8">
         {activeTab === 'dashboard' && <Dashboard />}
         {activeTab === 'patients' && <PatientsTab />}
         {activeTab === 'doctors' && <DoctorsTab />}
         {activeTab === 'consultorios' && <ConsultoriosTab />}
+        {activeTab === 'procedures' && <ProceduresTab />}
         {activeTab === 'users' && <UsersTab />}
       </main>
+
+
+      <ModalAgendamento
+          aberto={modalAgendamento.aberto}
+          consultorio={modalAgendamento.consultorio}
+          horario={modalAgendamento.horario}
+          pacientes={patients}
+          doctors={doctors}
+          procedimentos={procedimentos}
+          onClose={() => setModalAgendamento({ aberto: false, consultorio: null, horario: null })}
+          onSubmit={async dados => {
+            // 1. Monte a string de data/hora completa
+            const dataHoraStr = `${dados.dataAtendimento}T${modalAgendamento.horario}:00`;
+
+            // 2. Crie o objeto Date
+            const dataHora = new Date(dataHoraStr);
+
+            // 3. Valide se a data é válida
+            if (isNaN(dataHora.getTime())) {
+              alert('Data e horário inválidos!');
+              return;
+            }
+
+            // 4. Valide se a data/hora já passou
+            const agora = new Date();
+            if (dataHora < agora) {
+              alert('Não é possível agendar para um horário que já passou!');
+              return;
+            }
+
+            try {
+              await axios.post('/api/appointments', {
+                patient_id: dados.paciente_id,
+                doctor_id: dados.doctor_id,
+                consultorio_id: modalAgendamento.consultorio_id,
+                appointment_date: dataHora.toISOString(),
+                duration_minutes: dados.duration,
+                procedimento_id: dados.procedimentoId
+              });
+              setModalAgendamento({ aberto: false, consultorio: null, horario: null });
+              fetchDashboardData();
+              const res = await axios.get('/api/appointments');
+              setAgendamentos(res.data);
+            } catch (err) {
+              console.error('Erro ao salvar agendamento:', err);
+              if (err.response && err.response.data && err.response.data.detail) {
+                // Se for array, junte as mensagens
+                if (Array.isArray(err.response.data.detail)) {
+                  alert(
+                    'Erro ao salvar agendamento:\n' +
+                    err.response.data.detail.map(e =>
+                      typeof e === 'string'
+                        ? e
+                        : (e.msg || JSON.stringify(e))
+                    ).join('\n')
+                  );
+                } else if (typeof err.response.data.detail === 'object') {
+                  alert('Erro ao salvar agendamento: ' + JSON.stringify(err.response.data.detail, null, 2));
+                } else {
+                  alert('Erro ao salvar agendamento: ' + err.response.data.detail);
+                }
+              } else if (err.message) {
+                alert('Erro ao salvar agendamento: ' + err.message);
+              } else {
+                alert('Erro ao salvar agendamento (erro desconhecido)');
+              }
+            }
+          }}
+       />
 
       {/* Modals */}
       {showPatientForm && (
@@ -1857,6 +2145,14 @@ const App = () => {
         <DoctorForm
           onSubmit={handleCreateDoctor}
           onCancel={() => setShowDoctorForm(false)}
+        />
+      )}
+
+      {editingDoctor && (
+        <DoctorForm
+          doctor={editingDoctor}
+          onSubmit={(data) => handleUpdateDoctor(editingDoctor.id, data)}
+          onCancel={() => setEditingDoctor(null)}
         />
       )}
 
