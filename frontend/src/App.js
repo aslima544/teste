@@ -1361,13 +1361,13 @@ const App = () => {
       <div className="card">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-medium text-gray-900">Consultas Recentes</h2>
-          {/*<button
+          <button
             onClick={() => setShowAppointmentForm(true)}
             className="btn-primary"
           >
             <Plus className="h-4 w-4 mr-2" />
             Nova Consulta
-          </button>*/}
+          </button>
         </div>
         <div className="overflow-hidden">
           <table className="min-w-full divide-y divide-gray-200">
