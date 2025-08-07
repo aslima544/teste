@@ -2079,10 +2079,12 @@ const App = () => {
                 duration_minutes: dados.duration,
                 notes: dados.procedimentoId || ''
               });
+              
+              // Close modal and refresh all data
               setModalAgendamento({ aberto: false, consultorio: null, horario: null });
-              fetchDashboardData();
-              const res = await axios.get('/api/appointments');
-              setAgendamentos(res.data);
+              await fetchDashboardData(); // This already updates appointments
+              
+              alert('Consulta agendada com sucesso!');
             } catch (err) {
               console.error('Erro ao salvar agendamento:', err);
               if (err.response && err.response.data && err.response.data.detail) {
