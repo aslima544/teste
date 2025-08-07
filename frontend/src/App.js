@@ -2072,12 +2072,12 @@ const App = () => {
 
             try {
               await axios.post('/api/appointments', {
-                patient_id: dados.paciente_id,
+                patient_id: dados.patient_id,
                 doctor_id: dados.doctor_id,
-                consultorio_id: modalAgendamento.consultorio_id,
+                consultorio_id: modalAgendamento.consultorio?.id,
                 appointment_date: dataHora.toISOString(),
                 duration_minutes: dados.duration,
-                procedimento_id: dados.procedimentoId
+                notes: dados.procedimentoId || ''
               });
               setModalAgendamento({ aberto: false, consultorio: null, horario: null });
               fetchDashboardData();
