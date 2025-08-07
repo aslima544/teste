@@ -2080,9 +2080,13 @@ const App = () => {
                 notes: dados.procedimentoId || ''
               });
               
-              // Close modal and refresh all data
+              // Close modal and refresh all data immediately
               setModalAgendamento({ aberto: false, consultorio: null, horario: null });
-              await fetchDashboardData(); // This already updates appointments
+              
+              // Update both states to ensure consistency
+              await fetchDashboardData(); // Updates appointments state
+              const agendamentosRes = await axios.get('/api/appointments');
+              setAgendamentos(agendamentosRes.data); // Updates agendamentos state for slots
               
               alert('Consulta agendada com sucesso!');
             } catch (err) {
