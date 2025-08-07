@@ -33,12 +33,21 @@ function ConsultorioSlots({ consultorio, agendamentos, dataSelecionada, onAgenda
           let ocupado = false;
           if (!slotPassado) {
             agendamento = agendamentos.find(a => {
-              if (!a.horario) return false;
+              if (!a.appointment_date) return false;
               if (a.consultorio_id !== consultorio.id) return false;
-              if (a.data !== dataAgendamento) return false; // <-- Adicione esta linha!
-              const [h, m] = a.horario.split(':').map(Number);
-              const start = h * 60 + m;
-              const end = start + (a.duration || a.duration_minutes || 30);
+              
+              // Extract date and time from appointment_date
+              const appointmentDate = new Date(a.appointment_date);
+              const appointmentDateStr = appointmentDate.toISOString().slice(0, 10);
+              
+              // Check if it's the same date
+              if (appointmentDateStr !== dataAgendamento) return false;
+              
+              // Extract hour and minute from appointment_date
+              const appointmentHour = appointmentDate.getHours();
+              const appointmentMinute = appointmentDate.getMinutes();
+              const start = appointmentHour * 60 + appointmentMinute;
+              const end = start + (a.duration_minutes || 30);
 
               const slotTime = sh * 60 + sm;
 
