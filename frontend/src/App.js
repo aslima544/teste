@@ -533,7 +533,12 @@ const App = () => {
       setLoading(true);
       await axios.post('/api/appointments', appointmentData);
       setShowAppointmentForm(false);
-      fetchDashboardData();
+      
+      // Update both states for immediate UI refresh
+      await fetchDashboardData(); // Updates appointments state
+      const agendamentosRes = await axios.get('/api/appointments');
+      setAgendamentos(agendamentosRes.data); // Updates agendamentos state for slots
+      
       alert('Consulta agendada com sucesso!');
     } catch (error) {
       console.error('Error creating appointment:', error);
