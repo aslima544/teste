@@ -771,27 +771,30 @@ async def create_appointment(appointment: AppointmentCreate, current_user: dict 
     start_time = appointment.appointment_date
     end_time = start_time + timedelta(minutes=appointment.duration_minutes)
     
-    existing_appointment = db.appointments.find_one({
-        "consultorio_id": appointment.consultorio_id,
-        "status": {"$ne": "canceled"},
-        "$or": [
-            {
-                "$and": [
-                    {"appointment_date": {"$lte": start_time}},
-                    {"appointment_date": {"$gte": start_time}}
-                ]
-            },
-            {
-                "$and": [
-                    {"appointment_date": {"$lt": end_time}},
-                    {"appointment_date": {"$gt": start_time}}
-                ]
-            }
-        ]
-    })
+    # Convert to naive datetime if needed for comparison
+    if start_time.tzinfo is not None:
+        start_time = start_time.replace(tzinfo=None)
+    if end_time.tzinfo is not None:
+        end_time = end_time.replace(tzinfo=None)
     
-    if existing_appointment:
-        raise HTTPException(status_code=409, detail="Consultório já ocupado neste horário")
+    # Find any existing appointments that overlap with this time slot
+    existing_appointments = list(db.appointments.find({
+        "consultorio_id": appointment.consultorio_id,
+        "status": {"$ne": "canceled"}
+    }))
+    
+    for existing in existing_appointments:
+        existing_start = existing["appointment_date"]
+        if hasattr(existing_start, 'tzinfo') and existing_start.tzinfo is not None:
+            existing_start = existing_start.replace(tzinfo=None)
+        
+        existing_end = existing_start + timedelta(minutes=existing.get("duration_minutes", 30))
+        
+        # Check if there's any overlap
+        # Two appointments overlap if: start1 < end2 AND start2 < end1
+        if start_time < existing_end and existing_start < end_time:
+            raise HTTPException(status_code=409, detail="Consultório já ocupado neste horário")
+    
     
     appointment_data = {
         "id": str(uuid.uuid4()),
