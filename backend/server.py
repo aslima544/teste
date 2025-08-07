@@ -748,7 +748,13 @@ async def create_appointment(appointment: AppointmentCreate, current_user: dict 
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
 
-    if appointment.appointment_date < datetime.utcnow():
+    # Convert appointment date to UTC naive datetime for comparison
+    if appointment.appointment_date.tzinfo is not None:
+        appointment_utc = appointment.appointment_date.replace(tzinfo=None)
+    else:
+        appointment_utc = appointment.appointment_date
+    
+    if appointment_utc < datetime.utcnow():
         raise HTTPException(status_code=400, detail="Não é possível agendar para um horário que já passou.")
     
     # Check if doctor exists
