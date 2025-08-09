@@ -1034,6 +1034,70 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
 async def health_check():
     return {"status": "healthy", "timestamp": datetime.utcnow()}
 
+@app.get("/api/init-railway")
+async def init_railway():
+    """Initialize system for Railway - GET endpoint version"""
+    try:
+        # Check if admin already exists
+        existing_admin = db.users.find_one({"username": "admin"})
+        if existing_admin:
+            return {
+                "message": "System already initialized",
+                "admin_exists": True,
+                "users_count": db.users.count_documents({}),
+                "consultorios_count": db.consultorios.count_documents({})
+            }
+        
+        # Create admin user
+        admin_data = {
+            "id": str(uuid.uuid4()),
+            "username": "admin", 
+            "email": "admin@consultorio.com",
+            "full_name": "Administrador",
+            "role": "admin",
+            "password_hash": get_password_hash("admin123"),
+            "is_active": True,
+            "created_at": datetime.utcnow()
+        }
+        db.users.insert_one(admin_data)
+        
+        # Create basic consultorio if none exist
+        existing_consultorios = db.consultorios.count_documents({})
+        if existing_consultorios == 0:
+            consultorio_data = {
+                "id": str(uuid.uuid4()),
+                "name": "C1",
+                "description": "Consultório 1 - ESF 1", 
+                "capacity": 2,
+                "equipment": ["Estetoscópio", "Tensiômetro"],
+                "location": "Térreo",
+                "occupancy_type": "fixed",
+                "is_active": True,
+                "fixed_schedule": {
+                    "team": "ESF 1",
+                    "start": "07:00",
+                    "end": "16:00"
+                }
+            }
+            db.consultorios.insert_one(consultorio_data)
+        
+        return {
+            "message": "Railway system initialized successfully!",
+            "admin_created": True,
+            "credentials": {
+                "username": "admin",
+                "password": "admin123"
+            },
+            "users_count": db.users.count_documents({}),
+            "consultorios_count": db.consultorios.count_documents({})
+        }
+        
+    except Exception as e:
+        return {
+            "error": str(e),
+            "message": "Failed to initialize system"
+        }
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8001)
