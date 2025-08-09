@@ -27,11 +27,20 @@ app.add_middleware(
 )
 
 # Database Configuration
-MONGO_URL = os.getenv("MONGO_URL", "mongodb://localhost:27017")
-DATABASE_NAME = os.getenv("DATABASE_NAME", "consultorio_db")
+MONGO_URL = os.getenv("MONGO_URL") or os.getenv("DATABASE_URL") or "mongodb://localhost:27017"
+DATABASE_NAME = os.getenv("DATABASE_NAME", "sistema_consultorio")  # Atualizado para corresponder ao Atlas
 SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-for-jwt-tokens-consultorio")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "120"))
+
+# Debug: Print da URL para verificar (remover em produção)
+print(f"🔍 MONGO_URL configurada: {MONGO_URL[:50]}...")
+
+# Validar URL antes de conectar
+if not MONGO_URL.startswith(('mongodb://', 'mongodb+srv://')):
+    print(f"❌ URI inválida: {MONGO_URL}")
+    print("💡 Certifique-se que a variável MONGO_URL ou DATABASE_URL está configurada")
+    raise ValueError("MongoDB URI inválida - deve começar com mongodb:// ou mongodb+srv://")
 
 client = MongoClient(MONGO_URL)
 db = client[DATABASE_NAME]
