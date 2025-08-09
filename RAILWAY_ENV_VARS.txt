@@ -1,0 +1,17 @@
+# Configurações para Railway
+# Adicione estas variáveis de ambiente no Railway Dashboard:
+
+# OBRIGATÓRIO - Banco de dados
+MONGO_URL=mongodb+srv://admin:senha45195487@cluster0.8skwoca.mongodb.net/sistema_consultorio?retryWrites=true&w=majority&appName=Cluster0
+
+# OU use um destes nomes alternativos:
+DATABASE_URL=mongodb+srv://admin:senha45195487@cluster0.8skwoca.mongodb.net/sistema_consultorio?retryWrites=true&w=majority&appName=Cluster0
+MONGODB_URI=mongodb+srv://admin:senha45195487@cluster0.8skwoca.mongodb.net/sistema_consultorio?retryWrites=true&w=majority&appName=Cluster0
+
+# FRONTEND
+REACT_APP_BACKEND_URL=https://sistemagestao-production-0142.up.railway.app
+
+# OPCIONAIS
+DATABASE_NAME=sistema_consultorio
+SECRET_KEY=consultorio-secret-key-2025
+ACCESS_TOKEN_EXPIRE_MINUTES=120
