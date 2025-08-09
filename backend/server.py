@@ -27,20 +27,28 @@ app.add_middleware(
 )
 
 # Database Configuration
-MONGO_URL = os.getenv("MONGO_URL") or os.getenv("DATABASE_URL") or "mongodb://localhost:27017"
+print("🔍 Verificando variáveis de ambiente...")
+print(f"MONGO_URL exists: {'MONGO_URL' in os.environ}")
+print(f"DATABASE_URL exists: {'DATABASE_URL' in os.environ}")
+
+MONGO_URL = os.getenv("MONGO_URL") or os.getenv("DATABASE_URL") or os.getenv("MONGODB_URI")
 DATABASE_NAME = os.getenv("DATABASE_NAME", "sistema_consultorio")  # Atualizado para corresponder ao Atlas
 SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-for-jwt-tokens-consultorio")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "120"))
 
-# Debug: Print da URL para verificar (remover em produção)
-print(f"🔍 MONGO_URL configurada: {MONGO_URL[:50]}...")
-
-# Validar URL antes de conectar
-if not MONGO_URL.startswith(('mongodb://', 'mongodb+srv://')):
-    print(f"❌ URI inválida: {MONGO_URL}")
-    print("💡 Certifique-se que a variável MONGO_URL ou DATABASE_URL está configurada")
-    raise ValueError("MongoDB URI inválida - deve começar com mongodb:// ou mongodb+srv://")
+# Debug mais detalhado
+if MONGO_URL:
+    print(f"✅ MONGO_URL configurada: {MONGO_URL[:30]}...")
+    if not MONGO_URL.startswith(('mongodb://', 'mongodb+srv://')):
+        print(f"❌ URI inválida! Valor recebido: '{MONGO_URL}'")
+        raise ValueError(f"MongoDB URI inválida: {MONGO_URL}")
+else:
+    print("❌ NENHUMA variável de MongoDB encontrada!")
+    print("💡 Variáveis disponíveis:", list(os.environ.keys())[:10])
+    # Para Railway - usar fallback temporário para teste
+    MONGO_URL = "mongodb+srv://admin:senha45195487@cluster0.8skwoca.mongodb.net/sistema_consultorio?retryWrites=true&w=majority&appName=Cluster0"
+    print(f"🔄 Usando fallback: {MONGO_URL[:30]}...")
 
 client = MongoClient(MONGO_URL)
 db = client[DATABASE_NAME]
