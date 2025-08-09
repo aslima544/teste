@@ -635,6 +635,112 @@ async def get_consultorio_availability(day_of_week: str, current_user: dict = De
     
     return availability
 
+# TEMPORARY SETUP ENDPOINT FOR RAILWAY (REMOVE AFTER USE)
+@app.post("/api/setup-system")
+async def setup_system():
+    """Temporary endpoint to initialize system data for Railway deployment"""
+    try:
+        # Create admin user if doesn't exist
+        existing_admin = db.users.find_one({"username": "admin"})
+        if not existing_admin:
+            admin_data = {
+                "id": str(uuid.uuid4()),
+                "username": "admin",
+                "email": "admin@consultorio.com",
+                "full_name": "Administrador",
+                "role": "admin",
+                "password_hash": get_password_hash("admin123"),
+                "is_active": True,
+                "created_at": datetime.utcnow()
+            }
+            db.users.insert_one(admin_data)
+            
+        # Create basic users
+        users_data = [
+            {
+                "id": str(uuid.uuid4()),
+                "username": "recepcao",
+                "email": "recepcao@consultorio.com", 
+                "full_name": "Recepção",
+                "role": "reception",
+                "password_hash": get_password_hash("recepcao123"),
+                "is_active": True,
+                "created_at": datetime.utcnow()
+            }
+        ]
+        
+        for user_data in users_data:
+            existing = db.users.find_one({"username": user_data["username"]})
+            if not existing:
+                db.users.insert_one(user_data)
+        
+        # Create consultorios if they don't exist
+        existing_consultorios = db.consultorios.count_documents({})
+        if existing_consultorios == 0:
+            predefined_consultorios = [
+                {
+                    "id": str(uuid.uuid4()),
+                    "name": "C1",
+                    "description": "Consultório 1 - ESF 1",
+                    "capacity": 2,
+                    "equipment": ["Estetoscópio", "Tensiômetro", "Balança"],
+                    "location": "Térreo - Ala Oeste",
+                    "occupancy_type": "fixed",
+                    "is_active": True,
+                    "fixed_schedule": {
+                        "team": "ESF 1",
+                        "start": "07:00",
+                        "end": "16:00"
+                    }
+                },
+                {
+                    "id": str(uuid.uuid4()),
+                    "name": "C2", 
+                    "description": "Consultório 2 - ESF 2",
+                    "capacity": 2,
+                    "equipment": ["Estetoscópio", "Tensiômetro", "Balança"],
+                    "location": "Térreo - Ala Oeste",
+                    "occupancy_type": "fixed",
+                    "is_active": True,
+                    "fixed_schedule": {
+                        "team": "ESF 2", 
+                        "start": "07:00",
+                        "end": "16:00"
+                    }
+                },
+                {
+                    "id": str(uuid.uuid4()),
+                    "name": "C3",
+                    "description": "Consultório 3 - ESF 3", 
+                    "capacity": 2,
+                    "equipment": ["Estetoscópio", "Tensiômetro", "Balança"],
+                    "location": "Térreo - Ala Este",
+                    "occupancy_type": "fixed",
+                    "is_active": True,
+                    "fixed_schedule": {
+                        "team": "ESF 3",
+                        "start": "07:00", 
+                        "end": "16:00"
+                    }
+                }
+            ]
+            
+            for consultorio in predefined_consultorios:
+                db.consultorios.insert_one(consultorio)
+        
+        return {
+            "message": "System initialized successfully",
+            "users_created": db.users.count_documents({}),
+            "consultorios_created": db.consultorios.count_documents({}),
+            "admin_credentials": {
+                "username": "admin",
+                "password": "admin123"
+            }
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Setup failed: {str(e)}")
+
 # Get weekly schedule overview
 @app.get("/api/consultorios/weekly-schedule")
 async def get_weekly_schedule(current_user: dict = Depends(get_current_user)):
