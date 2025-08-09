@@ -1051,6 +1051,18 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
 async def health_check():
     return {"status": "healthy", "timestamp": datetime.utcnow()}
 
+@app.get("/api/debug-config")
+async def debug_config():
+    """Endpoint para debug das configurações (REMOVER EM PRODUÇÃO)"""
+    return {
+        "mongo_url_configured": bool(os.getenv("MONGO_URL")),
+        "database_url_configured": bool(os.getenv("DATABASE_URL")),
+        "mongodb_uri_configured": bool(os.getenv("MONGODB_URI")),
+        "database_name": DATABASE_NAME,
+        "mongo_url_prefix": MONGO_URL[:20] if MONGO_URL else "NONE",
+        "available_env_vars": [k for k in os.environ.keys() if 'MONGO' in k.upper() or 'DATABASE' in k.upper()]
+    }
+
 @app.get("/api/init-railway")
 async def init_railway():
     """Initialize system for Railway - GET endpoint version"""
