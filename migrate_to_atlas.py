@@ -111,15 +111,36 @@ def export_to_json():
     local_client.close()
 
 if __name__ == "__main__":
-    print("Escolha uma opção:")
-    print("1. Migração direta para Atlas")
-    print("2. Exportar para JSON")
+    print("🔄 INICIANDO MIGRAÇÃO AUTOMÁTICA PARA ATLAS")
+    print("=" * 50)
     
-    choice = input("\nDigite sua escolha (1 ou 2): ")
+    # Primeiro, vamos ver os dados locais
+    local_client = MongoClient("mongodb://localhost:27017")
+    local_db = local_client["consultorio_db"]
     
-    if choice == "1":
-        migrate_database()
-    elif choice == "2":
-        export_to_json()
+    print("📊 DADOS LOCAIS ENCONTRADOS:")
+    collections = ["users", "patients", "doctors", "appointments", "consultorios", "procedimentos"]
+    
+    total_docs = 0
+    for collection_name in collections:
+        count = local_db[collection_name].count_documents({})
+        total_docs += count
+        print(f"   📁 {collection_name}: {count} documentos")
+    
+    print(f"\n📈 TOTAL: {total_docs} documentos para migrar")
+    local_client.close()
+    
+    if total_docs == 0:
+        print("⚠️  Nenhum dado encontrado localmente!")
+        print("💡 Execute primeiro o populate_system.py localmente")
     else:
-        print("Opção inválida!")
+        print("\n" + "="*50)
+        print("🔗 PARA CONTINUAR, VOCÊ PRECISA:")
+        print("="*50)
+        print("1. Connection string do MongoDB Atlas")
+        print("2. Format: mongodb+srv://user:pass@cluster.mongodb.net/dbname")
+        print("\n💡 Copie a string do Atlas e execute:")
+        print(f'   python -c "from migrate_to_atlas import migrate_database; migrate_database()"')
+        print("\n🔄 Ou execute diretamente com a string:")
+        print('   export ATLAS_URL="sua-connection-string"')
+        print("   python migrate_to_atlas.py")
