@@ -18,10 +18,10 @@ def migrate_database():
     local_client = MongoClient("mongodb://localhost:27017")
     local_db = local_client["consultorio_db"]
     
-    # Atlas connection - você precisa fornecer a URL do Atlas
-    atlas_url = input("Cole aqui a URL de conexão do MongoDB Atlas: ")
+    # Atlas connection - usando a string fornecida
+    atlas_url = "mongodb+srv://admin:senha45195487@cluster0.8skwoca.mongodb.net/sistema_consultorio?retryWrites=true&w=majority&appName=Cluster0"
     atlas_client = MongoClient(atlas_url)
-    atlas_db = atlas_client["consultorio_db"]
+    atlas_db = atlas_client["sistema_consultorio"]  # Usando o nome do banco da URL
     
     # Collections to migrate
     collections = ["users", "patients", "doctors", "appointments", "consultorios", "procedimentos"]
