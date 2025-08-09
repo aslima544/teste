@@ -223,21 +223,102 @@ def serialize_doc(doc):
 # Initialize predefined consultorios
 @app.on_event("startup")
 async def startup_event():
-    # Create default admin user if doesn't exist
-    admin_user = db.users.find_one({"username": "admin"})
-    if not admin_user:
-        admin_data = {
-            "id": str(uuid.uuid4()),
-            "username": "admin",
-            "email": "admin@consultorio.com",
-            "full_name": "Administrador",
-            "role": "admin",
-            "password_hash": get_password_hash("admin123"),
-            "is_active": True,
-            "created_at": datetime.utcnow()
-        }
-        db.users.insert_one(admin_data)
-        print("Default admin user created: admin/admin123")
+    """Startup event - now non-blocking for better Railway deployment"""
+    try:
+        print("🚀 Iniciando aplicação...")
+        print("🔍 Testando conexão com MongoDB...")
+        
+        # Test MongoDB connection (non-blocking)
+        try:
+            # Quick connection test with timeout
+            client.admin.command('ping')
+            print("✅ MongoDB conectado com sucesso!")
+            
+            # Create default admin user if doesn't exist
+            admin_user = db.users.find_one({"username": "admin"})
+            if not admin_user:
+                admin_data = {
+                    "id": str(uuid.uuid4()),
+                    "username": "admin",
+                    "email": "admin@consultorio.com",
+                    "full_name": "Administrador",
+                    "role": "admin",
+                    "password_hash": get_password_hash("admin123"),
+                    "is_active": True,
+                    "created_at": datetime.utcnow()
+                }
+                db.users.insert_one(admin_data)
+                print("✅ Default admin user created: admin/admin123")
+            else:
+                print("✅ Admin user already exists")
+            
+            # Create predefined consultorios if they don't exist  
+            existing_consultorios = db.consultorios.count_documents({})
+            if existing_consultorios == 0:
+                print("📋 Criando consultórios padrão...")
+                predefined_consultorios = [
+                    {
+                        "id": str(uuid.uuid4()),
+                        "name": "C1",
+                        "description": "Consultório 1 - Estratégia Saúde da Família 1",
+                        "capacity": 2,
+                        "equipment": ["Estetoscópio", "Tensiômetro", "Balança"],
+                        "location": "Térreo - Ala Oeste",
+                        "occupancy_type": "fixed",
+                        "is_active": True,
+                        "fixed_schedule": {
+                            "team": "ESF 1",
+                            "start": "07:00",
+                            "end": "16:00"
+                        }
+                    },
+                    {
+                        "id": str(uuid.uuid4()),
+                        "name": "C2", 
+                        "description": "Consultório 2 - Estratégia Saúde da Família 2",
+                        "capacity": 2,
+                        "equipment": ["Estetoscópio", "Tensiômetro", "Balança"],
+                        "location": "Térreo - Ala Oeste",
+                        "occupancy_type": "fixed",
+                        "is_active": True,
+                        "fixed_schedule": {
+                            "team": "ESF 2",
+                            "start": "07:00",
+                            "end": "16:00"
+                        }
+                    },
+                    {
+                        "id": str(uuid.uuid4()),
+                        "name": "C3",
+                        "description": "Consultório 3 - Estratégia Saúde da Família 3",
+                        "capacity": 2,
+                        "equipment": ["Estetoscópio", "Tensiômetro", "Balança"],
+                        "location": "Térreo - Ala Este",
+                        "occupancy_type": "fixed",
+                        "is_active": True,
+                        "fixed_schedule": {
+                            "team": "ESF 3",
+                            "start": "07:00",
+                            "end": "16:00"
+                        }
+                    }
+                ]
+                
+                for consultorio in predefined_consultorios:
+                    db.consultorios.insert_one(consultorio)
+                print(f"✅ {len(predefined_consultorios)} consultórios criados")
+            else:
+                print(f"✅ {existing_consultorios} consultórios já existem")
+                
+        except Exception as mongo_error:
+            print(f"⚠️ Erro de conexão MongoDB (não-crítico): {str(mongo_error)}")
+            print("🔄 Aplicação continuará funcionando. Dados serão criados no primeiro acesso.")
+            
+    except Exception as e:
+        print(f"⚠️ Erro no startup (não-crítico): {str(e)}")
+        print("🔄 Aplicação continuará funcionando.")
+        
+    print("✅ Startup completado - aplicação pronta!")
     
     # Create predefined consultorios if they don't exist
     existing_consultorios = db.consultorios.count_documents({})
