@@ -1,0 +1,10 @@
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "uvicorn backend.server:app --host 0.0.0.0 --port $PORT"
+restartPolicyType = "never"
+
+[[services]]
+name = "web"
+source = "."
